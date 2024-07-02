@@ -1,4 +1,7 @@
+require("dotenv").config()
 const swaggerJsdoc = require('swagger-jsdoc');
+const path = require("path");
+const { url } = require("inspector");
 
 const options = {
   definition: {
@@ -7,14 +10,17 @@ const options = {
       title: 'Student Management System API',
       version: '1.0.0',
       description: 'API documentation for the Student Management System',
+      contact:{
+        name:'Runtime Solutions Pvt Ltd'
+      }
     },
     servers: [
       {
-        url: 'http://localhost:3000',
+        url: process.env.PROJECT_URL,
       },
     ],
   },
-  apis: ['./src/docs/swagger.doc.js'], 
+  apis: [path.join(__dirname, '../../docs/swagger/*.js')], 
 };
 
 const specs = swaggerJsdoc(options);

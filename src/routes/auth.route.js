@@ -6,7 +6,12 @@ const validator = require("../utils/validators/validator")
 const authValidator= require("../utils/validators/auth.validator")
 
 router.get('/test',(req,res)=> res.status(200).json("Test Successfull"))
+// Auth API's
 router.post('/login',validator(authValidator.loginValidator),authController.login)
+
+// Permission API's
+router.get('/permissions',authController.permissionList)
+router.post('/permissions',authController.permissionCreate)
 
 
 module.exports=router;

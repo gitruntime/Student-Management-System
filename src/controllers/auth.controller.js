@@ -32,9 +32,23 @@ const login = async (req, res, next) => {
   } catch (error){
     console.error("Login Error ",error);
   }
-
 };
+
+const permissionList = async (req, res, next) => {  
+  const { page, limit } = req.query
+  const args = page && limit ? {page,limit} : {page:null,limit:null}  
+  const data = await Auth.permissionList({...args})
+  console.log(data);
+  return res.status(200).json({ page: parseInt(page), results: data })
+}
+ 
+const permissionCreate = async (req, res, next) => {
+  const data = await Auth.permissionCreate(req)
+  return res.status(201).json({data})
+}
 
 module.exports = {
   login,
+  permissionList,
+  permissionCreate,
 };

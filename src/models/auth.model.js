@@ -13,6 +13,30 @@ const findUserByEmail= async (email) =>{
     }
 }
 
+const permissionList = async () => {
+    try {
+        const query = 'SELECT * FROM permissions';
+        const results= await queryAsync(query)
+        console.log(results);
+        return results
+    } catch (error) {
+        console.error(error);   
+    }
+}
+
+const permissionCreate = async (request) => {
+    const { name, codename } = request.body;
+    try {
+        const query = 'INSERT INTO permissions (name,codename) VALUES (?,?)';
+        const [results,] = await queryAsync(query,[name, codename])
+        return results
+    } catch (error) {
+        throw error
+    }
+}
+
 module.exports={
-    findUserByEmail
+    findUserByEmail,
+    permissionList,
+    permissionCreate
 }

@@ -12,6 +12,9 @@ router.post('/login',validator(authValidator.loginValidator),authController.logi
 // Permission API's
 router.get('/permissions',authController.permissionList)
 router.post('/permissions',authController.permissionCreate)
+router.get('/permissions/:id',authController.permissionView)
+router.put('/permissions/:id',authController.permissionUpdate)
+router.delete('/permissions/:id',authController.permissionDelete)
 
 
 module.exports=router;

@@ -13,6 +13,67 @@ const findUserByEmail= async (email) =>{
     }
 }
 
+
+const permissionList = async () => {
+    try {
+        const query = 'SELECT * FROM permissions';
+        const results= await queryAsync(query);
+        console.log(results);
+        return results
+    } catch (error) {
+        throw error
+    }
+}
+
+const permissionCreate = async (request) => {
+    const { name, codename } = request.body;
+    try {
+        const query = 'INSERT INTO permissions (name,codename) VALUES (?,?)';
+        const { insertId } = await queryAsync(query,[name, codename])
+        const result = await permissionView(insertId)
+        return result
+    } catch (error) {
+        throw error
+    }
+}
+
+const permissionView = async (id) =>{
+    try {
+        const query="SELECT * FROM permissions WHERE id=?"
+        const [result,] = await queryAsync(query,[id])
+        return result
+    } catch (error) {
+        throw error
+    }
+}
+
+const permissionUpdate = async (request,id) => {
+    const { name, codename } = request.body
+    try {
+        const query = "UPDATE permissions SET name=? ,codename=? WHERE id=?";
+        await queryAsync(query,[name,codename,id])
+        const result = await permissionView(id)
+        return result;
+    } catch (error) {
+        throw error
+    }
+}
+
+const permissionDelete = async (id) => {
+    try {
+        const query= "DELETE FROM permissions WHERE id=?";
+        const result = await queryAsync(query,[id])
+        console.log(result);
+        return result
+    } catch (error) {
+        throw error
+    }
+}
 module.exports={
-    findUserByEmail
+    findUserByEmail,
+    permissionList,
+    permissionCreate,
+    permissionView,
+    permissionUpdate,
+    permissionDelete
 }

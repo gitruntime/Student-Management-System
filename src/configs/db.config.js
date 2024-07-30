@@ -1,13 +1,25 @@
 require("dotenv").config();
-const env=process.env
-const mysql=require('mysql')
+const env = process.env;
+const { Sequelize } = require("sequelize");
+const logger = require("../../logger");
 
-const dbConfg={
-    host:env.DB_HOST,
-    user: env.DB_USER,
-    database: env.DB_NAME,
-}
+const db = new Sequelize(env.DB_NAME, env.DB_USER, env.DB_PASSWORD, {
+  host: env.DB_HOST,
+  dialect: "mysql",
+  logging: false,
+});
 
-const db=mysql.createConnection(dbConfg)
+const dbConnect = () => {
+  db.authenticate()
+    .then(() => {
+      logger.info("Connection has been established successfully.");
+    })
+    .catch((err) => {
+      logger.error("Unable to connect to the database:", err);
+    });
+};
 
-module.exports=db;
+module.exports = {
+  db,
+  dbConnect,
+};

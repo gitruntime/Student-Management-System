@@ -10,7 +10,7 @@
  *         first_name:
  *           type: string
  *         last_name:
- *           type: string 
+ *           type: string
  *         email:
  *           type: string
  *         phone_number:
@@ -37,7 +37,7 @@
  *         updated_at:
  *            type: string
  *            description: Date and time when the account was updated
- * 
+ *
  *       required:
  *         - first_name
  *         - email
@@ -52,7 +52,7 @@
  *                  description: This field is for human readable text for understanding for each permission
  *              codename:
  *                  type: string
- *                  description: This field is for setting the permission code     
+ *                  description: This field is for setting the permission code
  */
 /**
  * @swagger
@@ -83,11 +83,11 @@
  *       404:
  *         description: User not found
  */
-    /**
+/**
  * @swagger
  * /api/auth/permissions:
  *  get:
- *   summary: Permission List 
+ *   summary: Permission List
  *   tags: [Permissions]
  *   description: This api will allows you to list all the permissions
  *   responses:
@@ -100,27 +100,26 @@
  * @swagger
  * /api/auth/permissions:
  *   post:
- *      summary: Permission Create 
+ *      summary: Permission Create
  *      tags: [Permissions]
  *      description: This is api is used to create permissions
  *      requestBody:
  *          required: True
- *          content: 
+ *          content:
  *              application/json:
  *                  schema:
  *                   type: object
- *                   properties: 
+ *                   properties:
  *                       name:
  *                           type: string
  *                       codename:
  *                           type: string
  *      responses:
- *          201: 
+ *          201:
  *              description:  Permission Created Successfully
  *          500:
  *              description: Cannot Create Permission
  */
-
 
 /**
  * @swagger
@@ -140,7 +139,7 @@
  *              description: Permission Fetch Successfully
  *          500:
  *              description: Permission Cannot Fetch.
- */ 
+ */
 /**
  * @swagger
  * /api/auth/permissions/{id}:
@@ -155,7 +154,7 @@
  *            type: integer
  *          description: Id of the permission
  *      requestBody:
- *          content:        
+ *          content:
  *              application/json:
  *                  schema:
  *                      type: object
@@ -169,7 +168,7 @@
  *              description: Permission Updated Successfully
  *          500:
  *              description: Permission Cannot Fetch.
- */ 
+ */
 /**
  * @swagger
  * /api/auth/permissions/{id}:
@@ -188,6 +187,4 @@
  *              description: Permission Deleted Successfully
  *          500:
  *              description: Permission Cannot Fetch.
- */ 
-
-    
+ */

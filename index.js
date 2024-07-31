@@ -5,7 +5,8 @@ const swaggerUi = require("swagger-ui-express");
 const helmet = require("helmet");
 
 const swaggerSpec = require("./src/configs/swagger.config");
-const authRouter = require("./src/routes/accounts/auth.route");
+const authRouter = require("./src/routes/accounts/authentication.route");
+const adminRouter = require("./src/routes/admin/index");
 const teacherRouter = require("./src/routes/teachers/teacher.route");
 const port = process.env.PORT || 3000;
 const { dbConnect } = require("./src/configs/db.config");
@@ -24,7 +25,8 @@ app.use(
 );
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/auth", authRouter);
-app.use("/api/teachers", teacherRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/teacher", teacherRouter);
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;

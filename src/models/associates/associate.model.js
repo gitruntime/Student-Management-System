@@ -18,20 +18,20 @@ Permission.belongsToMany(Account, {
   otherKey: "account_id",
 });
 
-Account.hasOne(Teacher, { foreignKey: "account_id", as: "teachers" });
-Teacher.belongsTo(Account, { foreignKey: "account_id", as: "accounts" });
+Account.hasOne(Teacher, { foreignKey: "id", as: "teachers" });
+Teacher.belongsTo(Account, { foreignKey: "id", as: "accounts" });
 
-Account.hasOne(Admin, { foreignKey: "account_id", as: "admin" });
-Admin.belongsTo(Teacher, { foreignKey: "account_id", as: "accounts" });
+Account.hasOne(Admin, { foreignKey: "id", as: "admin" });
+Admin.belongsTo(Teacher, { foreignKey: "id", as: "accounts" });
 
-Account.hasOne(Student, { foreignKey: "account_id", as: "students" });
-Student.belongsTo(Account, { foreignKey: "account_id", as: "accounts" });
+Account.hasOne(Student, { foreignKey: "id", as: "students" });
+Student.belongsTo(Account, { foreignKey: "id", as: "accounts" });
 
-Account.hasOne(Parent, { foreignKey: "account_id", as: "parents" });
-Parent.belongsTo(Account, { foreignKey: "account_id", as: "accounts" });
+Account.hasOne(Parent, { foreignKey: "id", as: "parents" });
+Parent.belongsTo(Account, { foreignKey: "id", as: "accounts" });
 
-Account.hasMany(Address, { foreignKey: "account_id", as: "address" });
-Address.belongsTo(Account, { foreignKey: "account_id", as: "accounts" });
+Account.hasMany(Address, { foreignKey: "id", as: "address" });
+Address.belongsTo(Account, { foreignKey: "id", as: "accounts" });
 
 Teacher.hasOne(BankDetail, { foreignKey: "teacher_id", as: "bank_details" });
 BankDetail.belongsTo(Teacher, { foreignKey: "teacher_id", as: "teachers" });
@@ -74,6 +74,13 @@ module.exports = {
   Account,
   Permission,
   Teacher,
+  Experience,
   Admin,
   Address,
+  Certificate,
+  BankDetail,
+  Student,
+  Parent,
+  Class,
+  Subject,
 };

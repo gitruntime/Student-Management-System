@@ -7,7 +7,6 @@ const Admin = db.define(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
     },
     is_active: {
       type: DataTypes.BOOLEAN,

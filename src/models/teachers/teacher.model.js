@@ -7,7 +7,6 @@ const Teacher = db.define(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
     },
     bio: {
       type: DataTypes.STRING,

@@ -39,7 +39,7 @@ const Account = db.define(
       },
     },
     phone_number: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.STRING,
     },
     user_role: {
       type: DataTypes.ENUM,
@@ -130,22 +130,22 @@ const Account = db.define(
         switch (user.user_role) {
           case "teacher":
             await Teacher.create({
-              account_id: user.id,
+              id: user.id,
             });
             break;
           case "admin":
             await Admin.create({
-              account_id: user.id,
+              id: user.id,
             });
             break;
           case "parent":
             await Parent.create({
-              account_id: user.id,
+              id: user.id,
             });
             break;
           case "student":
             await Student.create({
-              account_id: user.id,
+              id: user.id,
             });
             break;
           default:

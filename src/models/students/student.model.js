@@ -7,7 +7,6 @@ const Student = db.define(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true,
     },
   },
   {

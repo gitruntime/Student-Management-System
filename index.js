@@ -12,30 +12,21 @@ const port = process.env.PORT || 3000;
 const { dbConnect } = require("./src/configs/db.config");
 const cors = require("cors");
 const logger = require("./logger");
+const errorHandler = require("./src/utils/handlers/error");
+const parseIntMiddleware = require("./src/middlewares/parseInt.middleware");
+const corsHeader = require("./src/configs/cors.config");
+const urlNotFound = require("./src/utils/handlers/urlNotFound");
 
 // Helmet Middleware Configuration
 app.use(helmet());
 app.use(express.json());
-app.use(
-  cors({
-    origin: process.env.PROJECT_URL,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    credentials: true,
-  }),
-);
+app.use(cors(corsHeader));
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(parseIntMiddleware);
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
 app.use("/api/teacher", teacherRouter);
-
-app.use((err, req, res, next) => {
-  const statusCode = err.statusCode || 500;
-  const message = err.message || "Internal Server Error";
-  return res.status(statusCode).json({
-    success: false,
-    statusCode,
-    message,
-  });
-});
+app.use("*", urlNotFound);
+app.use(errorHandler);
 dbConnect();
 app.listen(port, () => logger.info(`Server is Running on ${port}`));

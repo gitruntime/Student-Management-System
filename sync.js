@@ -8,7 +8,7 @@ const { Account } = require("./src/models/associates/associate.model");
     await Account.create({
       first_name: "John",
       last_name: "Doe",
-      email: "john.doe@example.com",
+      email: "john.doe@tJHexample.com",
       phone_number: "1234567890",
       user_role: "admin",
       password: "P@ssw0rd123",

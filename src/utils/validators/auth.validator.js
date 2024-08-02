@@ -1,10 +1,37 @@
-const { body } = require("express-validator");
+const Joi = require("joi");
 
-const loginValidator = [
-    body('email').trim().isEmail(),
-    body("password").trim().isLength({ min:8, max:16 })
-]
+const loginSchema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string()
+    .required()
+    .min(8)
+    .max(12)
+    .custom((value, helpers) => {
+      if (!/[A-Z]/.test(value)) {
+        return helpers.message(
+          "Password must contain at least one uppercase letter",
+        );
+      }
 
-module.exports={
-    loginValidator
-}
+      if (!/[a-z]/.test(value)) {
+        return helpers.message(
+          "Password must contain at least one lowercase letter",
+        );
+      }
+
+      if (!/\d/.test(value)) {
+        return helpers.message("Password must contain at least one digit");
+      }
+
+      if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
+        return helpers.message(
+          "Password must contain at least one special character",
+        );
+      }
+      return value;
+    }),
+});
+
+module.exports = {
+  loginSchema,
+};

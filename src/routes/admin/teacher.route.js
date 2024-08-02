@@ -1,6 +1,6 @@
 const express = require("express");
 /**
- *  Controls teacher related endpoinst
+ *  Controls teacher related endpoints
  */
 const router = express.Router();
 const TeacherController = require("../../controllers/admin/teacher.controller");
@@ -8,13 +8,43 @@ const {
   authMiddleware,
 } = require("../../middlewares/authentication.middleware");
 const { isAdmin } = require("../../middlewares/authorization.middleware");
+const validate = require("../../middlewares/validation.middleware");
+const { teacherSchema, experienceSchema, certificateSchema } = require("../../utils/validators/teacher.validator");
+const { bankDetailSchema, addressSchema } = require("../../utils/validators/common.validator");
 
 // Account and Teacher model CRUD
-router.get("/", authMiddleware, isAdmin, TeacherController.teacherList);
-router.post("/", authMiddleware, isAdmin, TeacherController.teacherCreate);
-router.get("/:id", authMiddleware, isAdmin, TeacherController.teacherView);
-router.put("/:id", authMiddleware, isAdmin, TeacherController.teacherUpdate);
-router.delete("/:id", authMiddleware, isAdmin, TeacherController.teacherDelete);
+router.get(
+  "/", 
+  authMiddleware, 
+  isAdmin, 
+  TeacherController.teacherList
+);
+router.post(
+  "/",
+  authMiddleware,
+  isAdmin,
+  validate(teacherSchema),
+  TeacherController.teacherCreate,
+);
+router.get(
+  "/:id", 
+  authMiddleware, 
+  isAdmin, 
+  TeacherController.teacherView
+);
+router.put(
+  "/:id",
+  authMiddleware,
+  isAdmin,
+  validate(teacherSchema),
+  TeacherController.teacherUpdate,
+);
+router.delete(
+  "/:id", 
+  authMiddleware, 
+  isAdmin, 
+  TeacherController.teacherDelete
+);
 
 // Experience model CRUD
 router.get(
@@ -27,6 +57,7 @@ router.post(
   "/:teacherId/experiences",
   authMiddleware,
   isAdmin,
+  validate(experienceSchema),
   TeacherController.experienceCreate,
 );
 router.get(
@@ -39,6 +70,7 @@ router.put(
   "/:teacherId/experiences/:id",
   authMiddleware,
   isAdmin,
+  validate(experienceSchema),
   TeacherController.experienceUpdate,
 );
 router.delete(
@@ -59,6 +91,7 @@ router.post(
   "/:teacherId/certificates",
   authMiddleware,
   isAdmin,
+  validate(certificateSchema),
   TeacherController.certificateCreate,
 );
 router.get(
@@ -71,6 +104,7 @@ router.put(
   "/:teacherId/certificates/:id",
   authMiddleware,
   isAdmin,
+  validate(certificateSchema),
   TeacherController.certificateUpdate,
 );
 router.delete(
@@ -91,6 +125,7 @@ router.post(
   "/:teacherId/address",
   authMiddleware,
   isAdmin,
+  validate(addressSchema),
   TeacherController.addressCreate,
 );
 router.get(
@@ -103,6 +138,7 @@ router.put(
   "/:teacherId/address/:id",
   authMiddleware,
   isAdmin,
+  validate(addressSchema),
   TeacherController.addressUpdate,
 );
 router.delete(
@@ -117,6 +153,7 @@ router.post(
   "/:teacherId/bank",
   authMiddleware,
   isAdmin,
+  validate(bankDetailSchema),
   TeacherController.bankDetailCreate,
 );
 router.get(
@@ -129,6 +166,7 @@ router.put(
   "/:teacherId/bank/:id",
   authMiddleware,
   isAdmin,
+  validate(bankDetailSchema),
   TeacherController.bankDetailUpdate,
 );
 router.delete(

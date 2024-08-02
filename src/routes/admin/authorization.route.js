@@ -8,12 +8,17 @@ const {
   authMiddleware,
 } = require("../../middlewares/authentication.middleware");
 const { isAdmin } = require("../../middlewares/authorization.middleware");
+const validate = require("../../middlewares/validation.middleware");
+const {
+  permissionSchema,
+} = require("../../utils/validators/authorization.validator");
 
 router.get("/", authMiddleware, isAdmin, permissionController.permissionList);
 router.post(
   "/",
   authMiddleware,
   isAdmin,
+  validate(permissionSchema),
   permissionController.permissionCreate,
 );
 router.get(
@@ -26,6 +31,7 @@ router.put(
   "/:id",
   authMiddleware,
   isAdmin,
+  validate(permissionSchema),
   permissionController.permissionUpdate,
 );
 router.delete(

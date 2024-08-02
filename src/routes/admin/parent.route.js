@@ -9,10 +9,35 @@ const {
 } = require("../../middlewares/authentication.middleware");
 const { isAdmin } = require("../../middlewares/authorization.middleware");
 
-router.get("/", authMiddleware, isAdmin, parentController.parentList);
-router.post("/", authMiddleware, isAdmin, parentController.parentCreate);
-router.get("/:id", authMiddleware, isAdmin, parentController.parentView);
-router.put("/:id", authMiddleware, isAdmin, parentController.parentUpdate);
-router.delete("/:id", authMiddleware, isAdmin, parentController.parentDelete);
+router.get(
+  "/", 
+  authMiddleware, 
+  isAdmin, 
+  parentController.parentList
+);
+router.post(
+  "/", 
+  authMiddleware, 
+  isAdmin, 
+  parentController.parentCreate
+);
+router.get(
+  "/:id", 
+  authMiddleware, 
+  isAdmin, 
+  parentController.parentView
+);
+router.put(
+  "/:id", 
+  authMiddleware, 
+  isAdmin, 
+  parentController.parentUpdate
+);
+router.delete(
+  "/:id", 
+  authMiddleware, 
+  isAdmin, 
+  parentController.parentDelete
+);
 
 module.exports = router;

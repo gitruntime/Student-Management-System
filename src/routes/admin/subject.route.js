@@ -4,44 +4,25 @@ const express = require("express");
  */
 const router = express.Router();
 const classController = require("../../controllers/admin/class.controller");
-const {
-  authMiddleware,
-} = require("../../middlewares/authentication.middleware");
-const { isAdmin } = require("../../middlewares/authorization.middleware");
-const validate = require("../../middlewares/validation.middleware");
-const { classSchema, subjectSchema } = require("../../utils/validators/class.validator");
+const { authMiddleware, isAdmin, validate } = require("../../middlewares");
+const { subjectSchema } = require("../../utils/validators/admin");
 
-router.get(
-  "/", 
-  authMiddleware, 
-  isAdmin, 
-  classController.subjectList
-);
+router.get("/", authMiddleware, isAdmin, classController.subjectList);
 router.post(
-  "/", 
-  authMiddleware, 
-  isAdmin, 
+  "/",
+  authMiddleware,
+  isAdmin,
   validate(subjectSchema),
-  classController.subjectCreate
+  classController.subjectCreate,
 );
-router.get(
-  "/:id", 
-  authMiddleware, 
-  isAdmin, 
-  classController.subjectView
-);
+router.get("/:id", authMiddleware, isAdmin, classController.subjectView);
 router.put(
-  "/:id", 
-  authMiddleware, 
-  isAdmin, 
+  "/:id",
+  authMiddleware,
+  isAdmin,
   validate(subjectSchema),
-  classController.subjectUpdate
+  classController.subjectUpdate,
 );
-router.delete(
-  "/:id", 
-  authMiddleware, 
-  isAdmin, 
-  classController.subjectDelete
-);
+router.delete("/:id", authMiddleware, isAdmin, classController.subjectDelete);
 
 module.exports = router;

@@ -1,4 +1,4 @@
-const { Class, Subject } = require("../../models/associates/associate.model");
+const { Class, Subject } = require("../../models");
 const { Response } = require("../../utils/handlers/response");
 const {
   HTTP_200_OK,

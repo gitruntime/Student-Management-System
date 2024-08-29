@@ -4,21 +4,17 @@ const express = require("express");
  */
 const router = express.Router();
 const TeacherController = require("../../controllers/admin/teacher.controller");
-const {
-  authMiddleware,
-} = require("../../middlewares/authentication.middleware");
-const { isAdmin } = require("../../middlewares/authorization.middleware");
 const validate = require("../../middlewares/validation.middleware");
-const { teacherSchema, experienceSchema, certificateSchema } = require("../../utils/validators/teacher.validator");
-const { bankDetailSchema, addressSchema } = require("../../utils/validators/common.validator");
+const {
+  teacherSchema,
+  experienceSchema,
+  certificateSchema,
+} = require("../../utils/validators/teacher.validator");
+const { addressSchema } = require("../../utils/validators/common.validator");
+const { isAdmin, authMiddleware } = require("../../middlewares");
 
 // Account and Teacher model CRUD
-router.get(
-  "/", 
-  authMiddleware, 
-  isAdmin, 
-  TeacherController.teacherList
-);
+router.get("/", authMiddleware, isAdmin, TeacherController.teacherList);
 router.post(
   "/",
   authMiddleware,
@@ -26,12 +22,7 @@ router.post(
   validate(teacherSchema),
   TeacherController.teacherCreate,
 );
-router.get(
-  "/:id", 
-  authMiddleware, 
-  isAdmin, 
-  TeacherController.teacherView
-);
+router.get("/:id", authMiddleware, isAdmin, TeacherController.teacherView);
 router.put(
   "/:id",
   authMiddleware,
@@ -39,12 +30,7 @@ router.put(
   validate(teacherSchema),
   TeacherController.teacherUpdate,
 );
-router.delete(
-  "/:id", 
-  authMiddleware, 
-  isAdmin, 
-  TeacherController.teacherDelete
-);
+router.delete("/:id", authMiddleware, isAdmin, TeacherController.teacherDelete);
 
 // Experience model CRUD
 router.get(
@@ -148,32 +134,32 @@ router.delete(
   TeacherController.addressDelete,
 );
 
-// BankDetail model CRUD
-router.post(
-  "/:teacherId/bank",
-  authMiddleware,
-  isAdmin,
-  validate(bankDetailSchema),
-  TeacherController.bankDetailCreate,
-);
-router.get(
-  "/:teacherId/bank/:id",
-  authMiddleware,
-  isAdmin,
-  TeacherController.bankDetailView,
-);
-router.put(
-  "/:teacherId/bank/:id",
-  authMiddleware,
-  isAdmin,
-  validate(bankDetailSchema),
-  TeacherController.bankDetailUpdate,
-);
-router.delete(
-  "/:teacherId/bank/:id",
-  authMiddleware,
-  isAdmin,
-  TeacherController.bankDetailDelete,
-);
+// // BankDetail model CRUD
+// router.post(
+//   "/:teacherId/bank",
+//   authMiddleware,
+//   isAdmin,
+//   validate(bankDetailSchema),
+//   TeacherController.bankDetailCreate,
+// );
+// router.get(
+//   "/:teacherId/bank/:id",
+//   authMiddleware,
+//   isAdmin,
+//   TeacherController.bankDetailView,
+// );
+// router.put(
+//   "/:teacherId/bank/:id",
+//   authMiddleware,
+//   isAdmin,
+//   validate(bankDetailSchema),
+//   TeacherController.bankDetailUpdate,
+// );
+// router.delete(
+//   "/:teacherId/bank/:id",
+//   authMiddleware,
+//   isAdmin,
+//   TeacherController.bankDetailDelete,
+// );
 
 module.exports = router;

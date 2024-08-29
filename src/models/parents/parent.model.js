@@ -8,6 +8,14 @@ const Parent = db.define(
       type: DataTypes.INTEGER,
       primaryKey: true,
     },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
+    },
   },
   {
     tableName: "parents",

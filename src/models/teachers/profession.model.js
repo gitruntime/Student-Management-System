@@ -1,13 +1,23 @@
-const { DataTypes } = require("sequelize");
-const { db } = require("../../configs/db.config");
+const { DataTypes, Model } = require("sequelize");
+const { db: sequelize } = require("../../configs/db.config");
+// const { TenantAbstract } = require("../core/base.model");
 
-const Certificate = db.define(
-  "Certificate",
+class Certificate extends Model {}
+
+Certificate.init(
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
     },
     title: {
       type: DataTypes.STRING,
@@ -22,21 +32,29 @@ const Certificate = db.define(
     },
   },
   {
+    sequelize,
     tableName: "certificates",
     paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
+    underscored: true,
   },
 );
 
-const Experience = db.define(
-  "Experience",
+class Experience extends Model {}
+
+Experience.init(
   {
     id: {
       type: DataTypes.INTEGER,
       autoIncrement: true,
       primaryKey: true,
+    },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
     },
     department: {
       type: DataTypes.STRING,
@@ -52,11 +70,10 @@ const Experience = db.define(
     },
   },
   {
+    sequelize,
     tableName: "experiences",
     paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
+    timestamps: true,
   },
 );
 

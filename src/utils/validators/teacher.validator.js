@@ -22,17 +22,15 @@ const teacherSchema = Joi.object({
 });
 
 const experienceSchema = Joi.object({
-    department: Joi.string().min(1).required(),
-    designation: Joi.string().min(1).required(),
-    date_joined: Joi.date().required(),
+  department: Joi.string().min(1).required(),
+  designation: Joi.string().min(1).required(),
+  date_joined: Joi.date().required(),
 });
 
 const certificateSchema = Joi.object({
-    title: Joi.string().min(1).required(),
-    link: Joi.string().uri().optional(),
+  title: Joi.string().min(1).required(),
+  link: Joi.string().uri().optional(),
 });
-
-
 
 module.exports = {
   teacherSchema,

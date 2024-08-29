@@ -10,4 +10,4 @@ const urlNotFound = (req, res, next) => {
     res,
   );
 };
-module.exports = urlNotFound;
+module.exports = { urlNotFound };

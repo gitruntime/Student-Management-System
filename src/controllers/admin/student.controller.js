@@ -1,6 +1,6 @@
 const { Op } = require("sequelize");
-const { Account, Student } = require("../../models/associates/associate.model");
 const tryCatch = require("../../utils/handlers/tryCatch");
+const { Account, Student } = require("../../models");
 
 const studentList = tryCatch(async (req, res, next) => {
   const { page, size } = req.query;

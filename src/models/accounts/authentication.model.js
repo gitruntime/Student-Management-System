@@ -1,34 +1,51 @@
-const { DataTypes } = require("sequelize");
-const { db } = require("../../configs/db.config");
-const { Teacher } = require("../../models/teachers/teacher.model");
-const bcrypt = require("bcrypt");
+const { DataTypes, Model } = require("sequelize");
+const { db: sequelize } = require("../../configs/db.config");
+const { Teacher } = require("../teachers/teacher.model");
 const { Admin } = require("../admin/admin.model");
 const { Parent } = require("../parents/parent.model");
 const { Student } = require("../students/student.model");
+// const { TenantAbstract } = require("../core/base.model");
+const bcrypt = require("bcrypt");
+const { Tenant } = require("../index");
 
-const Account = db.define(
-  "Account",
+class Account extends Model {}
+
+Account.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    first_name: {
-      type: DataTypes.STRING,
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
     },
-    last_name: {
+    firstName: {
       type: DataTypes.STRING,
-      allowNull: true,
+      field: "first_name",
+      allowNull: false,
     },
-    full_name: {
+    lastName: {
+      type: DataTypes.STRING,
+      field: "last_name",
+    },
+    fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.first_name} ${this.last_name}`;
+        return `${this.firstName} ${this.lastName}`;
       },
+    },
+    username: {
+      type: DataTypes.STRING,
     },
     email: {
       type: DataTypes.STRING,
+      allowNull: false,
       unique: {
         msg: "Email is already in use",
       },
@@ -38,13 +55,16 @@ const Account = db.define(
         },
       },
     },
-    phone_number: {
+    phoneNumber: {
       type: DataTypes.STRING,
+      field: "phone_number",
     },
-    user_role: {
+    userRole: {
       type: DataTypes.ENUM,
       values: ["student", "teacher", "admin", "parent", "normal"],
       defaultValue: "normal",
+      allowNull: false,
+      field: "user_role",
     },
     password: {
       type: DataTypes.STRING,
@@ -85,9 +105,9 @@ const Account = db.define(
         },
       },
     },
-    date_of_birth: {
+    dateOfBirth: {
       type: DataTypes.DATEONLY,
-      allowNull: true,
+      field: "date_of_birth",
       validate: {
         isDate: {
           msg: "Enter a valid Date",
@@ -99,26 +119,34 @@ const Account = db.define(
         },
       },
     },
-    is_active: {
+    isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
+      field: "is_active",
     },
-    is_superuser: {
+    // This field refers to the owner of this platform
+    isSuperuser: {
       type: DataTypes.BOOLEAN,
       defaultValue: false,
+      field: "is_superuser",
     },
-    is_staff: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
+    // This field refers to the school or college admin
+    isAdmin: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return !!this.userRole === "admin";
+      },
     },
   },
   {
+    sequelize,
     tableName: "accounts",
-    timestamps: true,
-    paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
+    modelName: "Account",
+    underscored: true,
+    /**
+     * Handling Lifeycle Events
+     * https://sequelize.org/docs/v6/other-topics/hooks/
+     */
     hooks: {
       beforeCreate: async (user, options) => {
         if (user.password) {
@@ -156,35 +184,6 @@ const Account = db.define(
   },
 );
 
-const Permission = db.define(
-  "Permission",
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    title: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    codename: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
-    },
-  },
-  {
-    tableName: "permissions",
-    timestamps: true,
-    paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
-  },
-);
-
 module.exports = {
   Account,
-  Permission,
 };

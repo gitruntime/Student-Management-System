@@ -9,6 +9,14 @@ const Employment = db.define(
       primaryKey: true,
       autoIncrement: true,
     },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
+    },
     basic_salary: {
       type: DataTypes.FLOAT,
       allowNull: false,

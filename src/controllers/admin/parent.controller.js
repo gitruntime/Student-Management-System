@@ -1,4 +1,4 @@
-const { Account, Parent } = require("../../models/associates/associate.model");
+const { Account, Parent } = require("../../models");
 const tryCatch = require("../../utils/handlers/tryCatch");
 
 const parentList = tryCatch(async (req, res, next) => {

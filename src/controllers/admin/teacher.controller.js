@@ -1,15 +1,14 @@
 const { Op } = require("sequelize");
-const {
-  Account,
-  Teacher,
-  Experience,
-  Certificate,
-  Address,
-  BankDetail,
-} = require("../../models/associates/associate.model");
 const { Response } = require("../../utils/handlers/response");
 const { HTTP_200_OK } = require("../../utils/handlers/status");
 const tryCatch = require("../../utils/handlers/tryCatch");
+const {
+  Teacher,
+  Account,
+  Experience,
+  Certificate,
+  Address,
+} = require("../../models");
 
 const teacherList = tryCatch(async (req, res, next) => {
   const { page, size } = req.query;
@@ -279,7 +278,8 @@ const addressView = tryCatch(async (req, res, next) => {
 
 const addressUpdate = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const { city, state, pincode, street_address, country, phone_number } = req.validatedData
+  const { city, state, pincode, street_address, country, phone_number } =
+    req.validatedData;
   const address = await Address.findByPk(id, { paranoid: false });
   if (!address) return res.status(404).json({ message: "Address not found" });
   await address.update({
@@ -301,70 +301,70 @@ const addressDelete = tryCatch(async (req, res, next) => {
   return res.status(200).json({ message: "Addresss Deleted Successfully" });
 });
 
-const bankDetailCreate = tryCatch(async (req, res, next) => {
-  const { teacherId } = req.params;
-  const {
-    name,
-    address,
-    holder_name,
-    account_number,
-    ifsc_code,
-    account_type,
-  } = req.validatedData;
-  const data = await BankDetail.create({
-    name,
-    address,
-    holder_name,
-    account_number,
-    ifsc_code,
-    account_type,
-    teacher_id: teacherId,
-  });
-  return res
-    .status(201)
-    .json({ message: "BankDetail created successfully.", data });
-});
+// const bankDetailCreate = tryCatch(async (req, res, next) => {
+//   const { teacherId } = req.params;
+//   const {
+//     name,
+//     address,
+//     holder_name,
+//     account_number,
+//     ifsc_code,
+//     account_type,
+//   } = req.validatedData;
+//   const data = await BankDetail.create({
+//     name,
+//     address,
+//     holder_name,
+//     account_number,
+//     ifsc_code,
+//     account_type,
+//     teacher_id: teacherId,
+//   });
+//   return res
+//     .status(201)
+//     .json({ message: "BankDetail created successfully.", data });
+// });
 
-const bankDetailView = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const bankDetail = await BankDetail.findByPk(id, { paranoid: false });
-  if (!bankDetail)
-    return res.status(404).json({ message: "Bank Detail not found" });
-  return res.status(200).json(bankDetail);
-});
+// const bankDetailView = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const bankDetail = await BankDetail.findByPk(id, { paranoid: false });
+//   if (!bankDetail)
+//     return res.status(404).json({ message: "Bank Detail not found" });
+//   return res.status(200).json(bankDetail);
+// });
 
-const bankDetailUpdate = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const {
-    name,
-    address,
-    holder_name,
-    account_number,
-    ifsc_code,
-    account_type,
-  } = req.validatedData;
-  const bankDetail = await BankDetail.findByPk(id, { paranoid: false });
-  if (!bankDetail)
-    return res.status(404).json({ message: "Address not found" });
-  await bankDetail.update({
-    name,
-    address,
-    holder_name,
-    account_number,
-    ifsc_code,
-    account_type,
-  });
-  return res.status(200).json(bankDetail);
-});
+// const bankDetailUpdate = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const {
+//     name,
+//     address,
+//     holder_name,
+//     account_number,
+//     ifsc_code,
+//     account_type,
+//   } = req.validatedData;
+//   const bankDetail = await BankDetail.findByPk(id, { paranoid: false });
+//   if (!bankDetail)
+//     return res.status(404).json({ message: "Address not found" });
+//   await bankDetail.update({
+//     name,
+//     address,
+//     holder_name,
+//     account_number,
+//     ifsc_code,
+//     account_type,
+//   });
+//   return res.status(200).json(bankDetail);
+// });
 
-const bankDetailDelete = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const bankDetail = await BankDetail.findByPk(id);
-  if (!bankDetail)
-    return res.status(404).json({ message: "Bank Detail not found" });
-  await bankDetail.destroy();
-  return res.status(200).json({ message: "Bank Detail Deleted Successfully" });
-});
+// const bankDetailDelete = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const bankDetail = await BankDetail.findByPk(id);
+//   if (!bankDetail)
+//     return res.status(404).json({ message: "Bank Detail not found" });
+//   await bankDetail.destroy();
+//   return res.status(200).json({ message: "Bank Detail Deleted Successfully" });
+// });
 
 module.exports = {
   teacherList,
@@ -387,8 +387,8 @@ module.exports = {
   addressView,
   addressUpdate,
   addressDelete,
-  bankDetailCreate,
-  bankDetailView,
-  bankDetailUpdate,
-  bankDetailDelete,
+  // bankDetailCreate,
+  // bankDetailView,
+  // bankDetailUpdate,
+  // bankDetailDelete,
 };

@@ -15,4 +15,4 @@ const tryCatch = (fn) => (req, res, next) => {
   });
 };
 
-module.exports = tryCatch;
+module.exports = { tryCatch };

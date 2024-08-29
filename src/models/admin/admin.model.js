@@ -1,25 +1,28 @@
-const { db } = require("../../configs/db.config");
-const { DataTypes } = require("sequelize");
+const { db: sequelize } = require("../../configs/db.config");
+const { DataTypes, Model } = require("sequelize");
+// const { TenantAbstract } = require("../core/base.model");
 
-const Admin = db.define(
-  "Admin",
+class Admin extends Model {}
+
+Admin.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
     },
-    is_active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
     },
   },
   {
+    sequelize,
     tableName: "admin",
-    timestamps: true,
-    paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
+    modelName: "Admin",
   },
 );
 

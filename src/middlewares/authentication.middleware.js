@@ -1,26 +1,28 @@
 require("dotenv").config();
-const jwt = require("jsonwebtoken");
 const { Response } = require("../utils/handlers/response");
+const { verifyAccessToken } = require("../utils/signings/auth.signing");
 
 /**
- * Here we set Token and User data in the request
+ * Here we set Token and User data in the request.
  */
-const authenticateToken = (req, res, next) => {
+const authMiddleware = (req, res, next) => {
   const bearerHeader = req.headers["authorization"];
 
   if (typeof bearerHeader !== "undefined") {
     const bearerToken = bearerHeader.split(" ")[1];
     req.token = bearerToken;
-    jwt.verify(req.token, process.env.ACCESS_TOKEN_SECRET, (err, authData) => {
-      if (err) return new Response({ message: "Token is not valid" }, 403, res);
+    try {
+      const authData = verifyAccessToken(req.token);
       req.user = authData;
       next();
-    });
+    } catch (error) {
+      return new Response({ message: "Token is not valid" }, 403, res);
+    }
   } else {
     return new Response({ message: "Token not provided" }, 403, res);
   }
 };
 
 module.exports = {
-  authMiddleware: authenticateToken,
+  authMiddleware,
 };

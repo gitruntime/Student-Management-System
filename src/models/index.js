@@ -1,11 +1,14 @@
-const { Account, Permission } = require("../accounts/auth.model");
-const { Admin } = require("../admin/admin.model");
-const { Teacher, Class, Subject } = require("../teachers/teacher.model");
-const { Address, BankDetail } = require("../common.model");
-const { Employment } = require("../teachers/employment.model");
-const { Certificate, Experience } = require("../teachers/profession.model");
-const { Student } = require("../students/student.model");
-const { Parent } = require("../parents/parent.model");
+const { Account, Permission } = require("./accounts");
+const { Admin } = require("./admin");
+const { Class, Subject } = require("./classes");
+const { Address } = require("./shared");
+const { Tenant } = require("./core");
+const { Parent } = require("./parents");
+const { Student } = require("./students");
+const { Teacher, Employment, Certificate, Experience } = require("./teachers");
+
+Tenant.hasOne(Account, { foreignKey: "tenantId", as: "accounts" });
+Account.belongsTo(Tenant, { foreignKey: "tenantId", as: "tenants" });
 
 Account.belongsToMany(Permission, {
   through: "accounts_permissions",
@@ -32,9 +35,6 @@ Parent.belongsTo(Account, { foreignKey: "id", as: "accounts" });
 
 Account.hasMany(Address, { foreignKey: "id", as: "address" });
 Address.belongsTo(Account, { foreignKey: "id", as: "accounts" });
-
-Teacher.hasOne(BankDetail, { foreignKey: "teacher_id", as: "bank_details" });
-BankDetail.belongsTo(Teacher, { foreignKey: "teacher_id", as: "teachers" });
 
 Teacher.hasOne(Employment, { foreignKey: "teacher_id", as: "employments" });
 Employment.belongsTo(Teacher, { foreignKey: "teacher_id", as: "teachers" });
@@ -78,9 +78,9 @@ module.exports = {
   Admin,
   Address,
   Certificate,
-  BankDetail,
   Student,
   Parent,
   Class,
   Subject,
+  Tenant,
 };

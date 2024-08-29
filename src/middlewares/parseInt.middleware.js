@@ -1,4 +1,4 @@
-module.exports = (req, res, next) => {
+const parseIntMiddleware = (req, res, next) => {
   ["page", "size"].forEach((param) => {
     if (req.query[param]) req.query[param] = parseInt(req.query[param], 10);
   });
@@ -8,4 +8,8 @@ module.exports = (req, res, next) => {
   });
 
   next();
+};
+
+module.exports = {
+  parseIntMiddleware,
 };

@@ -53,4 +53,4 @@ const errorHandler = (error, req, res, next) => {
   return new Response(responseMessage, statusCode, res);
 };
 
-module.exports = errorHandler;
+module.exports = { errorHandler };

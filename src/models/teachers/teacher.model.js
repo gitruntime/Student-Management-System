@@ -1,12 +1,22 @@
-const { DataTypes } = require("sequelize");
-const { db } = require("../../configs/db.config");
+const { DataTypes, Model } = require("sequelize");
+const { db: sequelize } = require("../../configs/db.config");
+// const { TenantAbstract } = require("../core/base.model");
 
-const Teacher = db.define(
-  "Teacher",
+class Teacher extends Model {}
+
+Teacher.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+    },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
     },
     bio: {
       type: DataTypes.STRING,
@@ -14,6 +24,7 @@ const Teacher = db.define(
     },
   },
   {
+    sequelize,
     tableName: "teachers",
     timestamps: true,
     paranoid: true,
@@ -23,52 +34,6 @@ const Teacher = db.define(
   },
 );
 
-const Class = db.define(
-  "Class",
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  },
-  {
-    tableName: "classes",
-    paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
-  },
-);
-
-const Subject = db.define(
-  "Subject",
-  {
-    id: {
-      type: DataTypes.INTEGER,
-      primaryKey: true,
-      autoIncrement: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  },
-  {
-    tableName: "subjects",
-    paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
-  },
-);
-
 module.exports = {
   Teacher,
-  Class,
-  Subject,
 };

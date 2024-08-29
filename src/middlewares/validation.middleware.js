@@ -1,5 +1,3 @@
-const { Response } = require("../utils/handlers/response");
-
 const structuredError = (errors) => {
   const mappedError = {};
   errors.forEach((error) => {
@@ -30,4 +28,4 @@ const validate = (schema) => (req, res, next) => {
   next();
 };
 
-module.exports = validate;
+module.exports = { validate };

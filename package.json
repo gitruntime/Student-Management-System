@@ -16,6 +16,7 @@
     "prettier": "^3.3.3"
   },
   "dependencies": {
+    "@sequelize/core": "^7.0.0-alpha.37",
     "bcrypt": "^5.1.1",
     "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.2",
@@ -27,6 +28,7 @@
     "jsonwebtoken": "^9.0.2",
     "mysql2": "^3.10.3",
     "sequelize": "^6.37.3",
+    "sequelize-typescript": "^2.1.6",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1",
     "winston": "^3.13.1"

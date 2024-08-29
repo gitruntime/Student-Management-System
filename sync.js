@@ -1,18 +1,19 @@
 const logger = require("./logger");
 const { db } = require("./src/configs/db.config");
-const { Account } = require("./src/models/associates/associate.model");
+const { Account, Tenant } = require("./src/models");
 
 (async () => {
   try {
     await db.sync({ force: true });
     await Account.create({
-      first_name: "John",
-      last_name: "Doe",
+      tenantUserId: 1,
+      firstName: "John",
+      lastName: "Doe",
       email: "john.doe@tJHexample.com",
-      phone_number: "1234567890",
-      user_role: "admin",
+      phoneNumber: "1234567890",
+      userRole: "admin",
       password: "P@ssw0rd123",
-      date_of_birth: "1990-01-01",
+      dateOfBirth: "1990-01-01",
     });
     logger.info("Database synced!");
   } catch (error) {

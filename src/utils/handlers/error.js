@@ -24,7 +24,13 @@ const errorHandler = (error, req, res, next) => {
   switch (true) {
     case error instanceof ValidationError:
       statusCode = HTTP_400_BAD_REQUEST;
-      responseMessage = { message: error.message, errors: error.errors };
+      responseMessage = {
+        message: error.message,
+        errors: error.errors.map((err) => ({
+          message: err.message,
+          value: err.value,
+        })),
+      };
       break;
     case error instanceof UniqueConstraintError:
       statusCode = HTTP_400_BAD_REQUEST;

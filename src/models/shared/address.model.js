@@ -1,5 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
+const { Tenant } = require("../core");
 // const { TenantAbstract } = require("../core");
 
 class Address extends Model {}
@@ -16,8 +17,7 @@ Address.init(
       references: {
         model: Tenant,
         key: "id",
-      },
-      field: "tenant_id",
+      }
     },
     city: {
       type: DataTypes.STRING,
@@ -31,7 +31,7 @@ Address.init(
       type: DataTypes.INTEGER,
       allowNull: false,
     },
-    street_address: {
+    streetAddress: {
       type: DataTypes.STRING,
       allowNull: false,
     },
@@ -39,14 +39,16 @@ Address.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    phone_number: {
-      type: DataTypes.INTEGER,
+    phoneNumber: {
+      type: DataTypes.STRING,
     },
   },
   {
     sequelize,
-    tableName: "address",
+    tableName: "addresses",
     underscored: true,
+    timestamps: true,
+    paranoid: true,
   },
 );
 

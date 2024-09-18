@@ -1,5 +1,5 @@
 require("dotenv").config();
-const errorHandler = require("./error");
+const { errorHandler } = require("./error");
 
 const urlNotFound = (req, res, next) => {
   errorHandler(

@@ -5,7 +5,7 @@ const {
   HTTP_201_CREATED,
   HTTP_404_NOT_FOUND,
 } = require("../../utils/handlers/status");
-const tryCatch = require("../../utils/handlers/tryCatch");
+const { tryCatch } = require("../../utils/handlers/tryCatch");
 
 const classList = tryCatch(async (req, res, next) => {
   const { page, size } = req.query;

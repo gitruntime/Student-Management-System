@@ -1,6 +1,6 @@
 const { db: sequelize } = require("../../configs/db.config");
 const { DataTypes, Model } = require("sequelize");
-// const { TenantAbstract } = require("../core/base.model");
+const { Tenant } = require("../core");
 
 class Admin extends Model {}
 
@@ -23,6 +23,9 @@ Admin.init(
     sequelize,
     tableName: "admin",
     modelName: "Admin",
+    timestamps: true,
+    paranoid: true,
+    underscored: true,
   },
 );
 

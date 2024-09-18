@@ -1,81 +1,61 @@
-const { Op } = require("sequelize");
 const { Response } = require("../../utils/handlers/response");
 const { HTTP_200_OK } = require("../../utils/handlers/status");
-const tryCatch = require("../../utils/handlers/tryCatch");
+const { tryCatch } = require("../../utils/handlers/tryCatch");
 const {
   Teacher,
   Account,
   Experience,
   Certificate,
   Address,
+  Education,
 } = require("../../models");
 
-const teacherList = tryCatch(async (req, res, next) => {
-  const { page, size } = req.query;
-  const offset = (page - 1) * size;
-  let responseData;
-  let options = {
-    paranoid: false,
-    where: { user_role: "teacher" },
+const teacherList = tryCatch(async (req, res) => {
+  const { size: limit = 10, page = 1 } = req.query;
+  const { rows: data, count } = await Account.findAndCountAll({
+    limit,
+    offset: (page - 1) * limit,
+    where: { userRole: "teacher", tenantId: req.tenant.id },
     include: {
       model: Teacher,
-      as: "teachers",
+      as: "teacherProfile",
     },
-  };
-  if (page && size) {
-    (options.page = page), (options.offset = offset);
-    const { rows, count } = await Account.findAndCountAll(options);
-    responseData = {
-      teachers: rows,
+  });
+  return new Response(
+    {
+      data,
       totalCount: count,
       currentPage: page,
-      totalPages: Math.ceil(count / size),
-      size: size,
-    };
-    return new Response(responseData, HTTP_200_OK, res);
-  }
-  responseData = (await Account.findAndCountAll(options)).rows;
-  return new Response(responseData, HTTP_200_OK, res);
+      totalPages: Math.ceil(count / limit),
+      size: limit,
+    },
+    HTTP_200_OK,
+    res,
+  );
 });
 
-const teacherCreate = tryCatch(async (req, res, next) => {
-  const {
-    first_name,
-    last_name,
-    email,
-    phone_number,
-    user_role,
-    password,
-    date_of_birth,
-    is_active,
-    is_staff,
-  } = req.validatedData;
+const teacherCreate = tryCatch(async (req, res) => {
   const data = await Account.create({
-    first_name,
-    last_name,
-    email,
-    phone_number,
-    user_role,
-    password,
-    date_of_birth,
-    is_active,
-    is_staff,
+    ...req.validatedData,
+    tenantId: req.tenant.id,
   });
   return res
     .status(201)
     .json({ message: "Teacher created successfully", data });
 });
 
-const teacherView = tryCatch(async (req, res, next) => {
+const teacherView = tryCatch(async (req, res) => {
   const { id } = req.params;
   const data = await Account.findOne({
     where: {
-      [Op.and]: [{ id }, { user_role: "teacher" }],
+      id,
+      userRole: "teacher",
+      tenantId: req.tenant.id,
     },
     include: [
       {
         model: Teacher,
-        as: "teachers",
+        as: "teacherProfile",
       },
     ],
   });
@@ -84,41 +64,25 @@ const teacherView = tryCatch(async (req, res, next) => {
 });
 
 const teacherUpdate = tryCatch(async (req, res, next) => {
-  const {
-    first_name,
-    last_name,
-    email,
-    phone_number,
-    user_role,
-    date_of_birth,
-    is_active,
-    is_staff,
-    bio,
-  } = req.validatedData;
   const { id } = req.params;
   const data = await Account.findOne({
     where: {
-      [Op.and]: [{ id }, { user_role: "teacher" }],
+      id,
+      userRole: "teacher",
+      tenantId: req.tenant.id,
     },
     include: [
       {
         model: Teacher,
-        as: "teachers",
+        as: "teacherProfile",
       },
     ],
   });
   if (!data) return res.status(404).json({ message: "Teacher not found" });
-  await data.update({
-    first_name,
-    last_name,
-    email,
-    phone_number,
-    user_role,
-    date_of_birth,
-    is_active,
-    is_staff,
-  });
-  await data.teachers.update({ bio });
+  const { bio, ...accountDetails } = req.validatedData;
+  Object.assign(data, accountDetails);
+  await data.save();
+  await data.teacherProfile.update({ bio });
   return res
     .status(200)
     .json({ message: "Teacher data updated successfully", data });
@@ -126,29 +90,35 @@ const teacherUpdate = tryCatch(async (req, res, next) => {
 
 const teacherDelete = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const rowDeleted = await Account.destroy({ where: { id } });
-  if (rowDeleted === 0)
-    return res.status(404).json({ message: "Teacher not found" });
+  const teacher = await Account.findByPk(id);
+  if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+  await teacher.destroy();
   return res.status(200).json({ message: "Teacher deleted successfully" });
 });
 
 const experienceList = tryCatch(async (req, res, next) => {
+  const { size: limit = 10, page = 1 } = req.query;
   const { teacherId } = req.params;
-  const data = await Experience.findAll({
-    paranoid: false,
-    where: { teacher_id: teacherId },
+  const { rows: data, count } = await Experience.findAndCountAll({
+    limit,
+    offset: (page - 1) * limit,
+    where: { teacherId: teacherId, tenantId: req.tenant.id },
   });
-  return res.status(200).json(data);
+  return res.status(200).json({
+    data,
+    totalCount: count,
+    currentPage: page,
+    totalPages: Math.ceil(count / limit),
+    size: limit,
+  });
 });
 
 const experienceCreate = tryCatch(async (req, res, next) => {
   const { teacherId } = req.params;
-  const { department, designation, date_joined } = req.validatedData;
   const data = await Experience.create({
-    department,
-    designation,
-    date_joined,
-    teacher_id: teacherId,
+    ...req.validatedData,
+    teacherId: teacherId,
+    tenantId: req.tenant.id,
   });
   return res
     .status(201)
@@ -157,25 +127,20 @@ const experienceCreate = tryCatch(async (req, res, next) => {
 
 const experienceView = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const data = Experience.findByPk(id, { paranoid: false });
+  const data = await Experience.findByPk(id);
   if (!data) return res.status(404).json({ message: "Experience not found" });
-  return res.status(200).json(data);
+  return res.status(200).json({ data });
 });
 
 const experienceUpdate = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const { department, designation, date_joined } = req.validatedData;
-  const experience = await Experience.findByPk(id);
-  if (!experience)
-    return res.status(404).json({ message: "Experience not found" });
-  await experience.update({
-    department,
-    designation,
-    date_joined,
-  });
+  const data = await Experience.findByPk(id);
+  if (!data) return res.status(404).json({ message: "Experience not found" });
+  Object.assign(data, req.validatedData);
+  await data.save();
   return res
     .status(200)
-    .json({ message: "Experience updated successfully", experience });
+    .json({ message: "Experience updated successfully", data });
 });
 
 const experienceDelete = tryCatch(async (req, res, next) => {
@@ -188,116 +153,164 @@ const experienceDelete = tryCatch(async (req, res, next) => {
 });
 
 const certificateList = tryCatch(async (req, res, next) => {
+  const { size: limit = 10, page = 1 } = req.query;
   const { teacherId } = req.params;
-  const certificates = await Certificate.findAll({
-    where: {
-      teacher_id: teacherId,
-    },
-    paranoid: false,
+  const { rows: data, count } = await Certificate.findAndCountAll({
+    limit,
+    offset: (page - 1) * limit,
+    where: { teacherId: teacherId, tenantId: req.tenant.id },
   });
-  return res.status(200).json({ certificates });
+  return res.status(200).json({
+    data,
+    totalCount: count,
+    currentPage: page,
+    totalPages: Math.ceil(count / limit),
+    size: limit,
+  });
 });
 
 const certificateCreate = tryCatch(async (req, res, next) => {
   const { teacherId } = req.params;
-  const { title, link } = req.validatedData;
-  const data = await Certificate.create({
-    title,
-    link,
-    teacher_id: teacherId,
-  });
+  const data = await Certificate.create({...req.validatedData,tenantId:req.tenant.id,teacherId:teacherId});
   return res
     .status(201)
     .json({ message: "Certificate created successfully.", data });
 });
 
-const certificateView = tryCatch(async (req, res, next) => {
+const certificateView = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const data = await Certificate.findByPk(id, { paranoid: false });
+  const data = await Certificate.findByPk(id);
   if (!data) return res.status(404).json({ message: "Certificate not found" });
-  return res.status(200).json(data);
+  return res.status(200).json({ data });
 });
 
-const certificateUpdate = tryCatch(async (req, res, next) => {
+const certificateUpdate = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const { title, link } = req.validatedData;
-  const certificate = await Certificate.findByPk(id);
-  if (!certificate)
+  const data = await Certificate.findOne({where:{id,tenantId:req.tenant.id}});
+  if (!data)
     return res.status(404).json({ message: "Certificate not found" });
-  await certificate.update({
-    title,
-    link,
-  });
+  Object.assign(data,req.validatedData)
+  await data.save();
   return res
     .status(200)
-    .json({ message: "Certificate Updated Successfully", certificate });
+    .json({ message: "Certificate Updated Successfully", data });
 });
 
-const certificateDelete = tryCatch(async (req, res, next) => {
+const certificateDelete = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const certificate = await Certificate.findByPk(id);
-  if (!certificate)
+  const data = await Certificate.findOne({where:{id,tenantId:req.tenant.id}});
+  if (!data)
     return res.status(404).json({ message: "Certificate not found" });
-  await certificate.destroy();
+  await data.destroy();
   return res.status(200).json({ message: "Certificate deleted Successfully" });
 });
 
-const addressList = tryCatch(async (req, res, next) => {
+const educationList = tryCatch(async (req, res) => {
+  const { size: limit = 10, page = 1 } = req.query;
   const { teacherId } = req.params;
-  const address = await Address.findAll({
-    where: { teacher_id: teacherId },
-    paranoid: false,
+  const { rows: data, count } = await Education.findAndCountAll({
+    limit,
+    offset: (page - 1) * limit,
+    where: { teacherId: teacherId, tenantId: req.tenant.id },
   });
-  return res.status(200).json({ address });
+  return res.status(200).json({
+    data,
+    totalCount: count,
+    currentPage: page,
+    totalPages: Math.ceil(count / limit),
+    size: limit,
+  });
 });
 
-const addressCreate = tryCatch(async (req, res, next) => {
-  const { teacherId } = req.params;
-  const { city, state, pincode, street_address, country, phone_number } =
-    req.validatedData;
-  const address = await Address.create({
-    city,
-    state,
-    pincode,
-    street_address,
-    country,
-    phone_number,
-    account_id: teacherId, // account_id and teacher_id are same
+const educationCreate = tryCatch(async (req, res) => {
+  const { teacherId } = req.params; 
+  const data = await Education.create({
+    ...req.validatedData,
+    teacherId: teacherId,
+    tenantId: req.tenant.id,
   });
   return res
     .status(201)
-    .json({ message: "Address created successfully", address });
+    .json({ message: "Education created successfully.", data });
 });
 
-const addressView = tryCatch(async (req, res, next) => {
+const educationView = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const address = await Address.findByPk(id, { paranoid: false });
-  if (!address) return res.status(404).json({ message: "Address not found" });
-  return res.status(200).json(address);
-});
-
-const addressUpdate = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const { city, state, pincode, street_address, country, phone_number } =
-    req.validatedData;
-  const address = await Address.findByPk(id, { paranoid: false });
-  if (!address) return res.status(404).json({ message: "Address not found" });
-  await address.update({
-    city,
-    state,
-    pincode,
-    street_address,
-    country,
-    phone_number,
+  const data = await Education.findOne({
+    where: { id, tenantId: req.tenant.id },
   });
-  return res.status(200).json(address);
+  if (!data) return res.status(404).json({ message: "Education not found" });
+  return res.status(200).json({ data });
+});
+
+const educationUpdate = tryCatch(async (req, res) => {
+  const { id } = req.params
+  const data = await Education.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!data) return res.status(404).json({ message: "Education not found" });
+  Object.assign(data,req.validatedData)
+  await data.save()
+  return res.status(200).json({data})
+});
+
+const educationDelete = tryCatch(async (req, res) => {
+  const { id } = req.params
+  const data = await Education.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!data) return res.status(404).json({ message: "Education not found" });
+  await data.destroy()
+  return res.status(200).json({message:"Education Deleted Successfully.!"})
+});
+
+
+const addressList = tryCatch(async (req, res, next) => {
+  const { size: limit = 10, page = 1 } = req.query;
+  const { teacherId:accountId } = req.params;
+  const { rows: data, count } = await Address.findAndCountAll({
+    limit,
+    offset: (page - 1) * limit,
+    where: { accountId, tenantId: req.tenant.id },
+  });
+  return res.status(200).json({
+    data,
+    totalCount: count,
+    currentPage: page,
+    totalPages: Math.ceil(count / limit),
+    size: limit,
+  });
+});
+
+const addressCreate = tryCatch(async (req, res, next) => {
+  const { teacherId:accountId } = req.params;
+  const data = await Address.create({...req.validatedData,accountId,tenantId:req.tenant.id});
+  return res
+    .status(201)
+    .json({ message: "Address created successfully", data });
+});
+
+const addressView = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const data = await Address.findOne({where:{id,tenantId:req.tenant.id}});
+  if (!data) return res.status(404).json({ message: "Address not found" });
+  return res.status(200).json({data});
+});
+
+const addressUpdate = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const data = await Address.findOne({where:{id,tenantId:req.tenant.id}});
+  if (!data) return res.status(404).json({ message: "Address not found" });
+  Object.assign(data,req.validatedData)
+  await data.save()
+  return res.status(200).json({data});
 });
 
 const addressDelete = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const address = await Address.findByPk(id);
-  if (!address) return res.status(404).json({ message: "Address not found" });
-  await address.destroy();
+  const data = await Address.findOne({where:{id,tenantId:req.tenant.id}});
+  if (!data) return res.status(404).json({ message: "Address not found" });
+  await data.destroy();
   return res.status(200).json({ message: "Addresss Deleted Successfully" });
 });
 
@@ -377,6 +390,11 @@ module.exports = {
   experienceView,
   experienceUpdate,
   experienceDelete,
+  educationList,
+  educationCreate,
+  educationView,
+  educationUpdate,
+  educationDelete,
   certificateList,
   certificateCreate,
   certificateView,

@@ -1,16 +1,15 @@
 const { DataTypes, Model } = require("sequelize");
-// const { TenantAbstract } = require("../core/base.model");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 
-class Permission extends Model {}
+class Education extends Model {}
 
-Permission.init(
+Education.init(
   {
     id: {
       type: DataTypes.INTEGER,
-      primaryKey: true,
       autoIncrement: true,
+      primaryKey: true,
     },
     tenantId: {
       type: DataTypes.INTEGER,
@@ -19,27 +18,38 @@ Permission.init(
         key: "id",
       },
     },
-    title: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    codename: {
+    fieldOfStudy: {
       type: DataTypes.STRING,
-      allowNull: false,
+    },
+    startDate: {
+      type: DataTypes.DATE,
+    },
+    endDate: {
+      type: DataTypes.DATE,
+    },
+    isPresent: {
+      type: DataTypes.VIRTUAL,
+      get() {
+        return !this.endDate;
+      },
+    },
+    description: {
+      type: DataTypes.STRING,
     },
   },
   {
     sequelize,
-    tableName: "permissions",
-    modelName: "Permission",
+    tableName: "educations",
     timestamps: true,
     paranoid: true,
-    underscored: true,
+    modelName: "Account",
   },
 );
 
-// Need to Create Group Model Also
-
 module.exports = {
-  Permission,
+  Education,
 };

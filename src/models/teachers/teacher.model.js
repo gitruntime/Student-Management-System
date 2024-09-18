@@ -1,5 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
+const { Tenant } = require("../core");
 // const { TenantAbstract } = require("../core/base.model");
 
 class Teacher extends Model {}
@@ -28,9 +29,7 @@ Teacher.init(
     tableName: "teachers",
     timestamps: true,
     paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
+    underscored: true,
   },
 );
 

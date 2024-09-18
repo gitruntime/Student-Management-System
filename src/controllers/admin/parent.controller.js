@@ -1,5 +1,5 @@
 const { Account, Parent } = require("../../models");
-const tryCatch = require("../../utils/handlers/tryCatch");
+const { tryCatch } = require("../../utils/handlers/tryCatch");
 
 const parentList = tryCatch(async (req, res, next) => {
   const { page, size } = req.query;

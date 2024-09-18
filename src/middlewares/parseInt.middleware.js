@@ -1,5 +1,5 @@
 const parseIntMiddleware = (req, res, next) => {
-  ["page", "size"].forEach((param) => {
+  ["page", "size", "limit"].forEach((param) => {
     if (req.query[param]) req.query[param] = parseInt(req.query[param], 10);
   });
 

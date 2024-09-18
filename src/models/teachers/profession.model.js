@@ -1,5 +1,6 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
+const { Tenant } = require("../core");
 // const { TenantAbstract } = require("../core/base.model");
 
 class Certificate extends Model {}
@@ -17,7 +18,6 @@ Certificate.init(
         model: Tenant,
         key: "id",
       },
-      field: "tenant_id",
     },
     title: {
       type: DataTypes.STRING,
@@ -36,6 +36,7 @@ Certificate.init(
     tableName: "certificates",
     paranoid: true,
     underscored: true,
+    timestamps: true,
   },
 );
 
@@ -54,7 +55,6 @@ Experience.init(
         model: Tenant,
         key: "id",
       },
-      field: "tenant_id",
     },
     department: {
       type: DataTypes.STRING,
@@ -64,7 +64,7 @@ Experience.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    date_joined: {
+    dateJoined: {
       type: DataTypes.DATEONLY,
       allowNull: false,
     },
@@ -74,6 +74,7 @@ Experience.init(
     tableName: "experiences",
     paranoid: true,
     timestamps: true,
+    underscored: true,
   },
 );
 

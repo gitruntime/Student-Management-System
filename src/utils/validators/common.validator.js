@@ -4,9 +4,9 @@ const addressSchema = Joi.object({
   city: Joi.string().min(1).required(),
   state: Joi.string().min(1).required(),
   pincode: Joi.number().integer().required(),
-  street_address: Joi.string().min(1).required(),
+  streetAddress: Joi.string().min(1).required(),
   country: Joi.string().min(1).required(),
-  phone_number: Joi.string()
+  phoneNumber: Joi.string()
     .pattern(/^[0-9]+$/)
     .allow(null),
 });

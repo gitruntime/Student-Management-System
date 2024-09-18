@@ -1,5 +1,6 @@
 const { DataTypes } = require("sequelize");
 const { db } = require("../../configs/db.config");
+const { Tenant } = require("../core");
 
 const Parent = db.define(
   "Parent",

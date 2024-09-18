@@ -5,14 +5,14 @@ const {
 } = require("../../utils/signings/auth.signing");
 const bcrypt = require("bcrypt");
 const { Response } = require("../../utils/handlers/response");
-const tryCatch = require("../../utils/handlers/tryCatch");
+const { tryCatch } = require("../../utils/handlers/tryCatch");
 const {
   HTTP_400_BAD_REQUEST,
   HTTP_200_OK,
 } = require("../../utils/handlers/status");
 const { Account } = require("../../models");
 
-const login = tryCatch(async (req, res, next) => {
+const login = tryCatch(async (req, res) => {
   const { email, password } = req.validatedData;
   const user = await Account.findOne({
     where: { email },
@@ -23,15 +23,11 @@ const login = tryCatch(async (req, res, next) => {
       "fullName",
       "userRole",
       "isActive",
-      "isTenant",
       "tenantId",
       "isSuperuser",
       "password",
-      "tenantUserId",
     ],
-    paranoid: false,
   });
-
   if (!user)
     return new Response(
       { message: "User with this email is not present" },
@@ -41,7 +37,7 @@ const login = tryCatch(async (req, res, next) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch)
     return new Response(
-      { message: "User with this email is not present" },
+      { message: "Password is not Correct" },
       HTTP_400_BAD_REQUEST,
       res,
     );

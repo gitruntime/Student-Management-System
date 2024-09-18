@@ -6,7 +6,7 @@ const { Parent } = require("../parents/parent.model");
 const { Student } = require("../students/student.model");
 // const { TenantAbstract } = require("../core/base.model");
 const bcrypt = require("bcrypt");
-const { Tenant } = require("../index");
+const { Tenant } = require("../core");
 
 class Account extends Model {}
 
@@ -23,21 +23,18 @@ Account.init(
         model: Tenant,
         key: "id",
       },
-      field: "tenant_id",
     },
     firstName: {
       type: DataTypes.STRING,
-      field: "first_name",
       allowNull: false,
     },
     lastName: {
       type: DataTypes.STRING,
-      field: "last_name",
     },
     fullName: {
       type: DataTypes.VIRTUAL,
       get() {
-        return `${this.firstName} ${this.lastName}`;
+        return `${this.firstName} ${this.lastName ? this.lastName : ""}`;
       },
     },
     username: {
@@ -57,14 +54,12 @@ Account.init(
     },
     phoneNumber: {
       type: DataTypes.STRING,
-      field: "phone_number",
     },
     userRole: {
       type: DataTypes.ENUM,
       values: ["student", "teacher", "admin", "parent", "normal"],
       defaultValue: "normal",
       allowNull: false,
-      field: "user_role",
     },
     password: {
       type: DataTypes.STRING,
@@ -122,7 +117,6 @@ Account.init(
     isActive: {
       type: DataTypes.BOOLEAN,
       defaultValue: true,
-      field: "is_active",
     },
     // This field refers to the owner of this platform
     isSuperuser: {
@@ -142,7 +136,9 @@ Account.init(
     sequelize,
     tableName: "accounts",
     modelName: "Account",
+    timestamps: true,
     underscored: true,
+    paranoid: true,
     /**
      * Handling Lifeycle Events
      * https://sequelize.org/docs/v6/other-topics/hooks/
@@ -154,26 +150,52 @@ Account.init(
           user.password = await bcrypt.hash(user.password, salt);
         }
       },
+      /**
+       * this hook is only calling when we call .save() method
+       *  Its better to call .save() instead of .update()
+       */
+      beforeUpdate: async (user, options) => {
+        if (user.changed("password")) {
+          const isSamePass = await bcrypt.compare(
+            user.password,
+            user.previous("password"),
+          );
+          if (!isSamePass) {
+            const salt = await bcrypt.genSalt(10);
+            user.password = await bcrypt.hash(user.password, salt);
+          }
+        }
+      },
+      beforeBulkCreate : async (user,options) => {
+        if (user.password) {
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(user.password, salt);
+        }
+      },
       afterCreate: async (user, options) => {
-        switch (user.user_role) {
+        switch (user.userRole) {
           case "teacher":
             await Teacher.create({
               id: user.id,
+              tenantId: user.tenantId,
             });
             break;
           case "admin":
             await Admin.create({
               id: user.id,
+              tenantId: user.tenantId,
             });
             break;
           case "parent":
             await Parent.create({
               id: user.id,
+              tenantId: user.tenantId,
             });
             break;
           case "student":
             await Student.create({
               id: user.id,
+              tenantId: user.tenantId,
             });
             break;
           default:

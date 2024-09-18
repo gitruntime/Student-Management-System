@@ -7,6 +7,7 @@ const helmet = require("helmet");
 const swaggerSpec = require("./src/configs/swagger.config");
 const authRouter = require("./src/routes/accounts/authentication.route");
 const adminRouter = require("./src/routes/admin/index");
+const nodeAdmin = require("./src/routes/superadmin/index");
 
 const port = process.env.PORT || 3000;
 const { dbConnect } = require("./src/configs/db.config");
@@ -28,7 +29,7 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(parseIntMiddleware);
 app.use("/api/auth", authRouter);
 app.use("/api/admin", adminRouter);
-app.use("/api/node-admin");
+app.use("/api/node-admin", nodeAdmin);
 // app.use("/api/teacher", teacherRouter);
 app.use("*", urlNotFound);
 app.use(errorHandler);

@@ -3,10 +3,15 @@ const env = process.env;
 const { Sequelize } = require("sequelize");
 const logger = require("../../logger");
 
-const db = new Sequelize(env.DB_NAME, env.DB_USER, env.DB_PASSWORD, {
-  host: env.DB_HOST,
-  dialect: "mysql",
-  logging: console.log,
+const db = new Sequelize(env.DATABASE_URL, {
+  dialect: "postgres",
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
+  logging:console.log
 });
 
 const dbConnect = () => {

@@ -1,16 +1,19 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
-// const { TenantAbstract } = require("../core/base.model");
 
-class Teacher extends Model {}
+class Attendance extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
-Teacher.init(
+Attendance.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement:true
+      autoIncrement: true,
     },
     tenantId: {
       type: DataTypes.INTEGER,
@@ -20,22 +23,25 @@ Teacher.init(
       },
       field: "tenant_id",
     },
-    bio: {
+    date: {
       type: DataTypes.STRING,
+      allowNull: false,
     },
-    bloodGroup: {
-      type: DataTypes.STRING,
+    status: {
+      type: DataTypes.ENUM,
+      values: ["present", "absent", "excused", "late"],
     },
   },
   {
     sequelize,
-    tableName: "teachers",
+    modelName: "Attendance",
+    tableName: "attendances",
+    underscored: true,
     timestamps: true,
     paranoid: true,
-    underscored: true,
-  }
+  },
 );
 
 module.exports = {
-  Teacher,
+  Attendance,
 };

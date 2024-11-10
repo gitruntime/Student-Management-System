@@ -5,10 +5,17 @@ const { Admin } = require("../admin/admin.model");
 const { Parent } = require("../parents/parent.model");
 const { Student } = require("../students/student.model");
 // const { TenantAbstract } = require("../core/base.model");
-const bcrypt = require("bcrypt");
 const { Tenant } = require("../core");
+const bcrypt = require("bcrypt");
 
-class Account extends Model {}
+class Account extends Model {
+  async comparePassword(password) {
+    return bcrypt.compare(password, this.password);
+  }
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
 Account.init(
   {
@@ -20,7 +27,7 @@ Account.init(
     tenantId: {
       type: DataTypes.INTEGER,
       references: {
-        model: Tenant,
+        model: "Tenant",
         key: "id",
       },
     },
@@ -75,14 +82,14 @@ Account.init(
         hasUpperCase: (value) => {
           if (!/[A-Z]/.test(value)) {
             throw new Error(
-              "Password must contain at least one uppercase letter",
+              "Password must contain at least one uppercase letter"
             );
           }
         },
         hasLowerCase: (value) => {
           if (!/[a-z]/.test(value)) {
             throw new Error(
-              "Password must contain at least one lowercase letter",
+              "Password must contain at least one lowercase letter"
             );
           }
         },
@@ -94,7 +101,7 @@ Account.init(
         hasSpecialCharacter: (value) => {
           if (!/[!@#$%^&*(),.?":{}|<>]/.test(value)) {
             throw new Error(
-              "Password must contain at least one special character",
+              "Password must contain at least one special character"
             );
           }
         },
@@ -151,14 +158,14 @@ Account.init(
         }
       },
       /**
-       * this hook is only calling when we call .save() method
-       *  Its better to call .save() instead of .update()
+       * this hook is only triggering when we call .save() method
+       *  Its better to use .save() method instead of .update() method
        */
       beforeUpdate: async (user, options) => {
         if (user.changed("password")) {
           const isSamePass = await bcrypt.compare(
             user.password,
-            user.previous("password"),
+            user.previous("password")
           );
           if (!isSamePass) {
             const salt = await bcrypt.genSalt(10);
@@ -166,44 +173,44 @@ Account.init(
           }
         }
       },
-      beforeBulkCreate : async (user,options) => {
+      beforeBulkCreate: async (user, options) => {
         if (user.password) {
           const salt = await bcrypt.genSalt(10);
           user.password = await bcrypt.hash(user.password, salt);
         }
       },
       afterCreate: async (user, options) => {
-        switch (user.userRole) {
-          case "teacher":
-            await Teacher.create({
-              id: user.id,
-              tenantId: user.tenantId,
-            });
-            break;
-          case "admin":
-            await Admin.create({
-              id: user.id,
-              tenantId: user.tenantId,
-            });
-            break;
-          case "parent":
-            await Parent.create({
-              id: user.id,
-              tenantId: user.tenantId,
-            });
-            break;
-          case "student":
-            await Student.create({
-              id: user.id,
-              tenantId: user.tenantId,
-            });
-            break;
-          default:
-            break;
-        }
+        // switch (user.userRole) {
+        //   case "teacher":
+        //     await Teacher.create({
+        //       id: user.id,
+        //       tenantId: user.tenantId,
+        //     });
+        //     break;
+        //   case "admin":
+        //     await Admin.create({
+        //       id: user.id,
+        //       tenantId: user.tenantId,
+        //     });
+        //     break;
+        //   case "parent":
+        //     await Parent.create({
+        //       id: user.id,
+        //       tenantId: user.tenantId,
+        //     });
+        //     break;
+        //   case "student":
+        //     await Student.create({
+        //       id: user.id,
+        //       tenantId: user.tenantId,
+        //     });
+        //     break;
+        //   default:
+        //     break;
+        // }
       },
     },
-  },
+  }
 );
 
 module.exports = {

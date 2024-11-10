@@ -1,11 +1,10 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
-// const { TenantAbstract } = require("../core");
 
-class Address extends Model {}
+class Event extends Model {}
 
-Address.init(
+Event.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -18,45 +17,38 @@ Address.init(
         model: Tenant,
         key: "id",
       },
+      field: "tenant_id",
     },
-    city: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    state: {
+    date: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    pincode: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    streetAddress: {
+    location: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    country: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    phoneNumber: {
+    description: {
       type: DataTypes.STRING,
     },
-    addressType: {
+    eventType: {
       type: DataTypes.ENUM,
-      values: ["Residential", "Permenant"],
-      defaultValue: "Permenant",
+      values: ["Cultural", "Academic", "Sports", "Other"],
     },
   },
   {
     sequelize,
-    tableName: "addresses",
+    modelName: "Event",
+    tableName: "events",
     underscored: true,
     timestamps: true,
     paranoid: true,
-  }
+  },
 );
 
 module.exports = {
-  Address,
+  Event,
 };

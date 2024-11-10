@@ -9,6 +9,7 @@ Admin.init(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement:true
     },
     tenantId: {
       type: DataTypes.INTEGER,

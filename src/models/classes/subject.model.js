@@ -29,6 +29,8 @@ Subject.init(
     sequelize,
     tableName: "subjects",
     modelName: "Subject",
+    paranoid: true,
+    timestamps: true,
   },
 );
 

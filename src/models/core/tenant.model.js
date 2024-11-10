@@ -29,7 +29,7 @@ Tenant.init(
     paranoid: true,
     hooks: {
       afterCreate: async (user, options) => {
-        // we can implement welcome mail in future with website link
+        // we can implement welcome mail in future with website link.
       },
     },
   },

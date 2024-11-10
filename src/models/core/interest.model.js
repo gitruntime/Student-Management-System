@@ -1,41 +1,43 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
-const { Tenant } = require("../core");
-// const { TenantAbstract } = require("../core/base.model");
 
-class Teacher extends Model {}
+class Interest extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
-Teacher.init(
+Interest.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement:true
+      autoIncrement: true,
     },
     tenantId: {
       type: DataTypes.INTEGER,
       references: {
-        model: Tenant,
+        model: "tenants",
         key: "id",
       },
       field: "tenant_id",
     },
-    bio: {
+    name: {
       type: DataTypes.STRING,
+      allowNull: false,
     },
-    bloodGroup: {
+    description: {
       type: DataTypes.STRING,
     },
   },
   {
     sequelize,
-    tableName: "teachers",
-    timestamps: true,
-    paranoid: true,
+    modelName: "Interest",
+    tableName: "interests",
     underscored: true,
   }
 );
 
 module.exports = {
-  Teacher,
+  Interest,
 };

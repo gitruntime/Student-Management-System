@@ -1,13 +1,19 @@
-const { DataTypes } = require("sequelize");
-const { db } = require("../../configs/db.config");
+const { DataTypes, Model } = require("sequelize");
+const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 
-const Student = db.define(
-  "Student",
+class Student extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
+
+Student.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
+      autoIncrement:true
     },
     tenantId: {
       type: DataTypes.INTEGER,
@@ -17,14 +23,24 @@ const Student = db.define(
       },
       field: "tenant_id",
     },
+    profilePicture: {
+      type: DataTypes.STRING,
+    },
+    bio: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    bloodGroup: {
+      type: DataTypes.STRING,
+    },
   },
   {
+    sequelize,
     tableName: "students",
+    modelName: "Student",
     timestamps: true,
     paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
+    underscored: true,
   },
 );
 

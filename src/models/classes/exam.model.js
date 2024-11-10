@@ -1,11 +1,10 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
-// const { TenantAbstract } = require("../core");
 
-class Address extends Model {}
+class Exam extends Model {}
 
-Address.init(
+Exam.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -18,45 +17,39 @@ Address.init(
         model: Tenant,
         key: "id",
       },
+      field: "tenant_id",
     },
-    city: {
+    name: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    state: {
+    date: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    pincode: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    streetAddress: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    country: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    phoneNumber: {
-      type: DataTypes.STRING,
-    },
-    addressType: {
+    examType: {
       type: DataTypes.ENUM,
-      values: ["Residential", "Permenant"],
-      defaultValue: "Permenant",
+      values: [
+        "First Sem",
+        "Second Sem",
+        "Third Sem",
+        "Fourth Sem",
+        "Fifth Sem",
+        "Sixth Sem",
+        "Unit Test",
+      ],
     },
   },
   {
     sequelize,
-    tableName: "addresses",
+    modelName: "Exam",
+    tableName: "exams",
     underscored: true,
-    timestamps: true,
     paranoid: true,
-  }
+    timestamps: true,
+  },
 );
 
 module.exports = {
-  Address,
+  Exam,
 };

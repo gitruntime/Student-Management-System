@@ -1,7 +1,7 @@
 const Joi = require("joi");
 
 const subjectSchema = Joi.object({
-  name: Joi.string().min(1).required(),
+  name: Joi.string().required(),
 });
 
 module.exports = {

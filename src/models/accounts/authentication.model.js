@@ -180,34 +180,34 @@ Account.init(
         }
       },
       afterCreate: async (user, options) => {
-        // switch (user.userRole) {
-        //   case "teacher":
-        //     await Teacher.create({
-        //       id: user.id,
-        //       tenantId: user.tenantId,
-        //     });
-        //     break;
-        //   case "admin":
-        //     await Admin.create({
-        //       id: user.id,
-        //       tenantId: user.tenantId,
-        //     });
-        //     break;
-        //   case "parent":
-        //     await Parent.create({
-        //       id: user.id,
-        //       tenantId: user.tenantId,
-        //     });
-        //     break;
-        //   case "student":
-        //     await Student.create({
-        //       id: user.id,
-        //       tenantId: user.tenantId,
-        //     });
-        //     break;
-        //   default:
-        //     break;
-        // }
+        switch (user.userRole) {
+          case "teacher":
+            await Teacher.create({
+              accountId: user.id,
+              tenantId: user.tenantId,
+            });
+            break;
+          case "admin":
+            await Admin.create({
+              accountId: user.id,
+              tenantId: user.tenantId,
+            });
+            break;
+          case "parent":
+            await Parent.create({
+              accountId: user.id,
+              tenantId: user.tenantId,
+            });
+            break;
+          case "student":
+            await Student.create({
+              accountId: user.id,
+              tenantId: user.tenantId,
+            });
+            break;
+          default:
+            break;
+        }
       },
     },
   }

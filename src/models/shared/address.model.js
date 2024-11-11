@@ -3,7 +3,11 @@ const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 // const { TenantAbstract } = require("../core");
 
-class Address extends Model {}
+class Address extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
 Address.init(
   {

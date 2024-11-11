@@ -39,7 +39,6 @@ const educationSchema = Joi.object({
   description: Joi.date().optional(),
 });
 
-
 module.exports = {
   teacherCreateSchema,
   teacherUpdateSchema,

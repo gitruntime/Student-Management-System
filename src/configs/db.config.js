@@ -11,7 +11,7 @@ const db = new Sequelize(env.DATABASE_URL, {
       rejectUnauthorized: false,
     },
   },
-  logging:console.log
+  logging: console.log,
 });
 
 const dbConnect = () => {

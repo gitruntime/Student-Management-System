@@ -18,11 +18,11 @@ const Employment = db.define(
       },
       field: "tenant_id",
     },
-    basic_salary: {
+    basicSalary: {
       type: DataTypes.FLOAT,
       allowNull: false,
     },
-    employment_type: {
+    employmentType: {
       type: DataTypes.ENUM,
       values: ["part", "full", "freelance"],
       defaultValue: "full",
@@ -31,10 +31,8 @@ const Employment = db.define(
   {
     tableName: "employments",
     paranoid: true,
-    createdAt: "created_at",
-    updatedAt: "updated_at",
-    deletedAt: "deleted_at",
-  },
+    underscored: true,
+  }
 );
 
 module.exports = {

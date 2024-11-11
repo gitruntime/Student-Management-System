@@ -3,7 +3,11 @@ const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 // const { TenantAbstract } = require("../core/base.model");
 
-class Certificate extends Model {}
+class Certificate extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
 Certificate.init(
   {
@@ -37,10 +41,14 @@ Certificate.init(
     paranoid: true,
     underscored: true,
     timestamps: true,
-  },
+  }
 );
 
-class Experience extends Model {}
+class Experience extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
 Experience.init(
   {
@@ -75,7 +83,7 @@ Experience.init(
     paranoid: true,
     timestamps: true,
     underscored: true,
-  },
+  }
 );
 
 module.exports = {

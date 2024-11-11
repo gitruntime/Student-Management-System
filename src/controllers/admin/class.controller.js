@@ -127,6 +127,18 @@ const subjectDelete = tryCatch(async (req, res, next) => {
   return res.status(200).json(data);
 });
 
+const examList = tryCatch(async (req, res, next) => {});
+const examCreate = tryCatch(async (req, res, next) => {});
+const examView = tryCatch(async (req, res, next) => {});
+const examUpdate = tryCatch(async (req, res, next) => {});
+const examDelete = tryCatch(async (req, res, next) => {});
+
+const eventList = tryCatch(async (req, res, next) => {});
+const eventCreate = tryCatch(async (req, res, next) => {});
+const eventView = tryCatch(async (req, res, next) => {});
+const eventUpdate = tryCatch(async (req, res, next) => {});
+const eventDelete = tryCatch(async (req, res, next) => {});
+
 module.exports = {
   classList,
   classCreate,

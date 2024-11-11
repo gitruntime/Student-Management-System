@@ -3,14 +3,18 @@ const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 // const { TenantAbstract } = require("../core/base.model");
 
-class Teacher extends Model {}
+class Teacher extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
 Teacher.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement:true
+      autoIncrement: true,
     },
     tenantId: {
       type: DataTypes.INTEGER,

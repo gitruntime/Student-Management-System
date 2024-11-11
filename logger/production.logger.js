@@ -7,11 +7,14 @@ const prodFormat = printf(({ level, message, timestamp }) => {
 
 const productionLogger = () => {
   return createLogger({
-    level: "info",
+    level: "silly",
     format: combine(timestamp(), prodFormat),
     transports: [
+      new transports.File({
+        filename: "logs/application.log",
+        handleExceptions: true,
+      }),
       new transports.Console(),
-      new transports.File({ filename: "logs/application.log" }),
     ],
   });
 };

@@ -135,7 +135,7 @@ router.put(
   TeacherController.certificateUpdate,
 );
 router.delete(
-  "/:teacherId/certifications/:id", 
+  "/:teacherId/certifications/:id",
   authMiddleware,
   isAdmin,
   TeacherController.certificateDelete,

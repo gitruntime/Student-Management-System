@@ -1,5 +1,4 @@
 require("dotenv").config();
-const { Response } = require("../utils/handlers/response");
 const { verifyAccessToken } = require("../utils/signings/auth.signing");
 
 /**
@@ -16,10 +15,10 @@ const authMiddleware = (req, res, next) => {
       req.user = authData;
       next();
     } catch (error) {
-      return new Response({ message: "Token is not valid" }, 403, res);
+      return res.status(403).json({ message: "Token is not valid" });
     }
   } else {
-    return new Response({ message: "Token not provided" }, 403, res);
+    return res.status(403).json({ message: "Token not provided" });
   }
 };
 

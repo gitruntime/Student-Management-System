@@ -30,7 +30,7 @@ const teacherList = tryCatch(async (req, res) => {
       size: limit,
     },
     HTTP_200_OK,
-    res,
+    res
   );
 });
 
@@ -171,7 +171,11 @@ const certificateList = tryCatch(async (req, res, next) => {
 
 const certificateCreate = tryCatch(async (req, res, next) => {
   const { teacherId } = req.params;
-  const data = await Certificate.create({...req.validatedData,tenantId:req.tenant.id,teacherId:teacherId});
+  const data = await Certificate.create({
+    ...req.validatedData,
+    tenantId: req.tenant.id,
+    teacherId: teacherId,
+  });
   return res
     .status(201)
     .json({ message: "Certificate created successfully.", data });
@@ -186,10 +190,11 @@ const certificateView = tryCatch(async (req, res) => {
 
 const certificateUpdate = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const data = await Certificate.findOne({where:{id,tenantId:req.tenant.id}});
-  if (!data)
-    return res.status(404).json({ message: "Certificate not found" });
-  Object.assign(data,req.validatedData)
+  const data = await Certificate.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!data) return res.status(404).json({ message: "Certificate not found" });
+  Object.assign(data, req.validatedData);
   await data.save();
   return res
     .status(200)
@@ -198,9 +203,10 @@ const certificateUpdate = tryCatch(async (req, res) => {
 
 const certificateDelete = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const data = await Certificate.findOne({where:{id,tenantId:req.tenant.id}});
-  if (!data)
-    return res.status(404).json({ message: "Certificate not found" });
+  const data = await Certificate.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!data) return res.status(404).json({ message: "Certificate not found" });
   await data.destroy();
   return res.status(200).json({ message: "Certificate deleted Successfully" });
 });
@@ -223,7 +229,7 @@ const educationList = tryCatch(async (req, res) => {
 });
 
 const educationCreate = tryCatch(async (req, res) => {
-  const { teacherId } = req.params; 
+  const { teacherId } = req.params;
   const data = await Education.create({
     ...req.validatedData,
     teacherId: teacherId,
@@ -244,30 +250,29 @@ const educationView = tryCatch(async (req, res) => {
 });
 
 const educationUpdate = tryCatch(async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   const data = await Education.findOne({
     where: { id, tenantId: req.tenant.id },
   });
   if (!data) return res.status(404).json({ message: "Education not found" });
-  Object.assign(data,req.validatedData)
-  await data.save()
-  return res.status(200).json({data})
+  Object.assign(data, req.validatedData);
+  await data.save();
+  return res.status(200).json({ data });
 });
 
 const educationDelete = tryCatch(async (req, res) => {
-  const { id } = req.params
+  const { id } = req.params;
   const data = await Education.findOne({
     where: { id, tenantId: req.tenant.id },
   });
   if (!data) return res.status(404).json({ message: "Education not found" });
-  await data.destroy()
-  return res.status(200).json({message:"Education Deleted Successfully.!"})
+  await data.destroy();
+  return res.status(200).json({ message: "Education Deleted Successfully.!" });
 });
-
 
 const addressList = tryCatch(async (req, res, next) => {
   const { size: limit = 10, page = 1 } = req.query;
-  const { teacherId:accountId } = req.params;
+  const { teacherId: accountId } = req.params;
   const { rows: data, count } = await Address.findAndCountAll({
     limit,
     offset: (page - 1) * limit,
@@ -283,8 +288,12 @@ const addressList = tryCatch(async (req, res, next) => {
 });
 
 const addressCreate = tryCatch(async (req, res, next) => {
-  const { teacherId:accountId } = req.params;
-  const data = await Address.create({...req.validatedData,accountId,tenantId:req.tenant.id});
+  const { teacherId: accountId } = req.params;
+  const data = await Address.create({
+    ...req.validatedData,
+    accountId,
+    tenantId: req.tenant.id,
+  });
   return res
     .status(201)
     .json({ message: "Address created successfully", data });
@@ -292,23 +301,29 @@ const addressCreate = tryCatch(async (req, res, next) => {
 
 const addressView = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const data = await Address.findOne({where:{id,tenantId:req.tenant.id}});
+  const data = await Address.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
   if (!data) return res.status(404).json({ message: "Address not found" });
-  return res.status(200).json({data});
+  return res.status(200).json({ data });
 });
 
 const addressUpdate = tryCatch(async (req, res) => {
   const { id } = req.params;
-  const data = await Address.findOne({where:{id,tenantId:req.tenant.id}});
+  const data = await Address.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
   if (!data) return res.status(404).json({ message: "Address not found" });
-  Object.assign(data,req.validatedData)
-  await data.save()
-  return res.status(200).json({data});
+  Object.assign(data, req.validatedData);
+  await data.save();
+  return res.status(200).json({ data });
 });
 
 const addressDelete = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const data = await Address.findOne({where:{id,tenantId:req.tenant.id}});
+  const data = await Address.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
   if (!data) return res.status(404).json({ message: "Address not found" });
   await data.destroy();
   return res.status(200).json({ message: "Addresss Deleted Successfully" });

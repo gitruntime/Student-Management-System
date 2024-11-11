@@ -18,7 +18,7 @@
  *         password:
  *           type: string
  *         date_of_birth:
- *           type: string
+ *           type: string   
  *           format: date
  *         is_active:
  *            type: boolean

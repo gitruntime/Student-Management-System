@@ -40,6 +40,13 @@ Account.hasMany(Address, {
 });
 Address.belongsTo(Account, { foreignKey: "accountId", as: "account" });
 
+Account.hasMany(Certificate, {
+  foreignKey: "accountId",
+  as: "certificates",
+  onDelete: "CASCADE",
+});
+Certificate.belongsTo(Account, { foreignKey: "accountId", as: "account" });
+
 Account.belongsToMany(Interest, {
   through: "students_interests",
   foreignKey: "interestId",
@@ -90,6 +97,14 @@ Teacher.hasMany(Experience, {
   as: "experiences",
 });
 Experience.belongsTo(Teacher, {
+  foreignKey: "teacherId",
+  as: "teacherProfile",
+});
+Teacher.hasMany(Education, {
+  foreignKey: "teacherId",
+  as: "educations",
+});
+Education.belongsTo(Teacher, {
   foreignKey: "teacherId",
   as: "teacherProfile",
 });

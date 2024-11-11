@@ -3,13 +3,7 @@ const {
   generateRefreshToken,
   verifyRefreshToken,
 } = require("../../utils/signings/auth.signing");
-const bcrypt = require("bcrypt");
-const { Response } = require("../../utils/handlers/response");
 const { tryCatch } = require("../../utils/handlers/tryCatch");
-const {
-  HTTP_400_BAD_REQUEST,
-  HTTP_200_OK,
-} = require("../../utils/handlers/status");
 const { Account } = require("../../models");
 
 const login = tryCatch(async (req, res) => {
@@ -27,20 +21,18 @@ const login = tryCatch(async (req, res) => {
       "isSuperuser",
       "password",
     ],
+    include
   });
   if (!user)
-    return new Response(
-      { message: "User with this email is not present" },
-      HTTP_400_BAD_REQUEST,
-      res,
-    );
-  const isMatch = await bcrypt.compare(password, user.password);
+    return res
+      .status(404)
+      .json({ errors: { email: "User with this email is not present" } });
+  const isMatch = await user.comparePassword(password);
   if (!isMatch)
-    return new Response(
-      { message: "Password is not Correct" },
-      HTTP_400_BAD_REQUEST,
-      res,
-    );
+    return res
+      .status(400)
+      .json({ errors: { password: "Password is not Correct" } });
+
   let userData = user.get({ plain: true });
 
   // Removing Un-necessary Data
@@ -51,11 +43,10 @@ const login = tryCatch(async (req, res) => {
 
   const accessToken = generateAccessToken(userData);
   const refreshToken = generateRefreshToken(userData);
-  return new Response(
-    { message: "User Login Successfully", data: { accessToken, refreshToken } },
-    HTTP_200_OK,
-    res,
-  );
+  return res.status(200).json({
+    message: "User Login Successfully",
+    data: { accessToken, refreshToken },
+  });
 });
 
 const refresh = tryCatch(async (req, res) => {
@@ -78,6 +69,8 @@ const refresh = tryCatch(async (req, res) => {
     return res.status(400).json({ message: "Token Invalid" });
   }
 });
+
+const forgetPassword = tryCatch(async (req, res) => {});
 
 module.exports = {
   login,

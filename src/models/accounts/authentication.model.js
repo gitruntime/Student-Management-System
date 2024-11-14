@@ -162,7 +162,7 @@ Account.init(
        *  Its better to use .save() method instead of .update() method
        */
       beforeUpdate: async (user, options) => {
-        if (user.changed("password")) {
+        if (user.changed("password") && user.password && user.previous("password")) {
           const isSamePass = await bcrypt.compare(
             user.password,
             user.previous("password")

@@ -21,7 +21,6 @@ const login = tryCatch(async (req, res) => {
       "isSuperuser",
       "password",
     ],
-    include
   });
   if (!user)
     return res

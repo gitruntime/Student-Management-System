@@ -2,7 +2,11 @@ const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 
-class Education extends Model {}
+class Education extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
 Education.init(
   {
@@ -47,7 +51,7 @@ Education.init(
     timestamps: true,
     paranoid: true,
     modelName: "Account",
-  },
+  }
 );
 
 module.exports = {

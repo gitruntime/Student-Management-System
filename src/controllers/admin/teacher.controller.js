@@ -1,5 +1,3 @@
-const { Response } = require("../../utils/handlers/response");
-const { HTTP_200_OK } = require("../../utils/handlers/status");
 const { tryCatch } = require("../../utils/handlers/tryCatch");
 const {
   Teacher,
@@ -9,29 +7,35 @@ const {
   Address,
   Education,
 } = require("../../models");
+const { calculateTotalPages } = require("../../utils/handlers");
 
 const teacherList = tryCatch(async (req, res) => {
-  const { size: limit = 10, page = 1 } = req.query;
+  const {
+    size: limit = 10,
+    page = 1,
+    sortBy = "id",
+    sortOrder = "ASC",
+  } = req.query;
   const { rows: data, count } = await Account.findAndCountAll({
     limit,
     offset: (page - 1) * limit,
     where: { userRole: "teacher", tenantId: req.tenant.id },
-    include: {
-      model: Teacher,
-      as: "teacherProfile",
-    },
+    // include: {
+    //   model: Teacher,
+    //   as: "teacherProfile",
+    //   attributes: ["bio", "bloodGroup"],
+    // },
+    attributes: ["id", "fullName", "createdAt", "firstName", "lastName"],
+    order: [[sortBy, sortOrder]],
   });
-  return new Response(
-    {
-      data,
-      totalCount: count,
-      currentPage: page,
-      totalPages: Math.ceil(count / limit),
-      size: limit,
-    },
-    HTTP_200_OK,
-    res
-  );
+  return res.status(200).json({
+    data,
+    totalCount: count,
+    currentPage: page,
+    totalPages: calculateTotalPages(count, limit),
+    size: limit,
+    message: "Teacher's data fetched Successfully",
+  });
 });
 
 const teacherCreate = tryCatch(async (req, res) => {
@@ -39,9 +43,16 @@ const teacherCreate = tryCatch(async (req, res) => {
     ...req.validatedData,
     tenantId: req.tenant.id,
   });
-  return res
-    .status(201)
-    .json({ message: "Teacher created successfully", data });
+  return res.status(201).json({
+    message: "Teacher created successfully",
+    data: {
+      id: data.id,
+      firstName: data.firstName,
+      lastName: data.lastName || "",
+      email: data.email,
+      fullName: data.fullName,
+    },
+  });
 });
 
 const teacherView = tryCatch(async (req, res) => {
@@ -52,15 +63,28 @@ const teacherView = tryCatch(async (req, res) => {
       userRole: "teacher",
       tenantId: req.tenant.id,
     },
-    include: [
+    include: [    
       {
         model: Teacher,
         as: "teacherProfile",
+        attributes: ["bio", "bloodGroup"],
       },
     ],
+    attributes: {
+      exclude: [
+        "password",
+        "isSuperuser",
+        "deletedAt",
+        "isAdmin",
+        "tenantId",
+        "userRole",
+      ],
+    },
   });
   if (!data) return res.status(404).json({ message: "Teacher not found" });
-  return res.status(200).json(data);
+  return res
+    .status(200)
+    .json({ data, message: "Teacher fetched Successfully.!!" });
 });
 
 const teacherUpdate = tryCatch(async (req, res, next) => {
@@ -75,14 +99,19 @@ const teacherUpdate = tryCatch(async (req, res, next) => {
       {
         model: Teacher,
         as: "teacherProfile",
+        attributes: ["id", "bio", "bloodGroup"],
       },
     ],
+    attributes: {
+      exclude: ["password", "isSuperuser", "deletedAt", "isAdmin", "tenantId"],
+    },
   });
   if (!data) return res.status(404).json({ message: "Teacher not found" });
-  const { bio, ...accountDetails } = req.validatedData;
-  Object.assign(data, accountDetails);
+  const { bio, bloodGroup, ...accountDetails } = req.validatedData;
+  data.updateFormData(accountDetails);
   await data.save();
-  await data.teacherProfile.update({ bio });
+  await data.teacherProfile.updateFormData({ bio, bloodGroup });
+  await data.teacherProfile.save();
   return res
     .status(200)
     .json({ message: "Teacher data updated successfully", data });
@@ -90,19 +119,26 @@ const teacherUpdate = tryCatch(async (req, res, next) => {
 
 const teacherDelete = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const teacher = await Account.findByPk(id);
-  if (!teacher) return res.status(404).json({ message: "Teacher not found" });
-  await teacher.destroy();
+  const data = await Account.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!data) return res.status(404).json({ message: "Teacher not found" });
+  await data.destroy();
   return res.status(200).json({ message: "Teacher deleted successfully" });
 });
 
 const experienceList = tryCatch(async (req, res, next) => {
   const { size: limit = 10, page = 1 } = req.query;
   const { teacherId } = req.params;
+  const teacher = await Teacher.findOne({
+    where: { accountId: teacherId, tenantId: req.tenant.id },
+    attributes: ["id"],
+  });
   const { rows: data, count } = await Experience.findAndCountAll({
     limit,
     offset: (page - 1) * limit,
-    where: { teacherId: teacherId, tenantId: req.tenant.id },
+    where: { teacherId: teacher.id, tenantId: req.tenant.id },
+    attributes: { exclude: ["tenantId", "teacherId", "deletedAt"] },
   });
   return res.status(200).json({
     data,
@@ -115,9 +151,14 @@ const experienceList = tryCatch(async (req, res, next) => {
 
 const experienceCreate = tryCatch(async (req, res, next) => {
   const { teacherId } = req.params;
+  const teacher = await Teacher.findOne({
+    where: { accountId: teacherId, tenantId: req.tenant.id },
+    attributes: ["id"],
+  });
+  if (!teacher) return res.status(404).json({ message: "Teacher not Found" });
   const data = await Experience.create({
     ...req.validatedData,
-    teacherId: teacherId,
+    teacherId: teacher.id,
     tenantId: req.tenant.id,
   });
   return res
@@ -126,17 +167,37 @@ const experienceCreate = tryCatch(async (req, res, next) => {
 });
 
 const experienceView = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await Experience.findByPk(id);
+  const { teacherId, id } = req.params;
+  const teacher = await Teacher.findOne({
+    where: { accountId: teacherId, tenantId: req.tenant.id },
+    attributes: ["id"],
+  });
+  if (!teacher) {
+    return res.status(404).json({ message: "Teacher not Found.!" });
+  }
+  const data = await Experience.findOne({
+    where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
+    attributes: { exclude: ["tenantId", "teacherId", "deletedAt"] },
+  });
   if (!data) return res.status(404).json({ message: "Experience not found" });
   return res.status(200).json({ data });
 });
 
 const experienceUpdate = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await Experience.findByPk(id);
+  const { id, teacherId } = req.params;
+  const teacher = await Teacher.findOne({
+    where: { accountId: teacherId, tenantId: req.tenant.id },
+    attributes: ["id"],
+  });
+  if (!teacher) {
+    return res.status(404).json({ message: "Teacher not Found.!" });
+  }
+  const data = await Experience.findOne({
+    where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
+    attributes: { exclude: ["tenantId", "teacherId", "deletedAt"] },
+  });
   if (!data) return res.status(404).json({ message: "Experience not found" });
-  Object.assign(data, req.validatedData);
+  data.updateFormData(req.validatedData);
   await data.save();
   return res
     .status(200)
@@ -144,11 +205,22 @@ const experienceUpdate = tryCatch(async (req, res, next) => {
 });
 
 const experienceDelete = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const experience = await Experience.findByPk(id);
-  if (!experience)
-    return res.status(404).json({ message: "Experience not found" });
-  await experience.destroy();
+  const { id, teacherId } = req.params;
+  const teacher = await Teacher.findOne({
+    where: { accountId: teacherId, tenantId: req.tenant.id },
+    attributes: ["id"],
+  });
+  if (!teacher) {
+    return res.status(404).json({ message: "Teacher not Found.!" });
+  }
+  const data = await Experience.findOne({
+    where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
+    attributes: { exclude: ["tenantId", "deletedAt"] },
+  });
+  console.log(data);
+
+  if (!data) return res.status(404).json({ message: "Experience not found" });
+  await data.destroy();
   return res.status(200).json({ message: "Experience Deleted Successfully." });
 });
 

@@ -10,6 +10,7 @@ const {
   addressSchema,
   certificateSchema,
   educationSchema,
+  experienceSchema,
 } = require("../../utils/validators/teacher/account.validator");
 
 router.get("/", authMiddleware, accountController.TeacherView);
@@ -82,5 +83,24 @@ router.delete(
   "/educations/:id",
   authMiddleware,
   accountController.EducationDelete
+);
+router.get("/experiences", authMiddleware, accountController.ExperienceList);
+router.post(
+  "/experiences",
+  authMiddleware,
+  validate(experienceSchema),
+  accountController.ExperienceCreate
+);
+router.get("/experiences/:id", authMiddleware, accountController.ExperienceView);
+router.put(
+  "/experiences/:id",
+  authMiddleware,
+  validate(experienceSchema),
+  accountController.ExperienceUpdate
+);
+router.delete(
+  "/experiences/:id",
+  authMiddleware,
+  accountController.ExperienceDelete
 );
 module.exports = router;

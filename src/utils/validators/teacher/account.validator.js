@@ -29,13 +29,20 @@ const educationSchema = Joi.object({
   name: Joi.string().required(),
   fieldOfStudy: Joi.string().required(),
   startDate: Joi.date().required(),
-  endDate: Joi.date().optional(),
+  endDate: Joi.date().required(),
   description: Joi.string().optional(),
+});
+
+const experienceSchema = Joi.object({
+  department: Joi.string().required(),
+  designation: Joi.string().required(),
+  dateJoined: Joi.date().required(),
 });
 
 module.exports = {
   teacherProfileSchema,
   addressSchema,
   certificateSchema,
-  educationSchema
+  educationSchema,
+  experienceSchema,
 };

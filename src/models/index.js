@@ -162,6 +162,9 @@ Subject.belongsToMany(Class, {
   otherKey: "classId",
 });
 
+Class.hasMany(Student, { foreignKey: "classId", as: "students" });
+Student.belongsTo(Class, { foreignKey: "classId", as: "studentProfile" });
+
 class ClassTeacher extends Model {
   preventMultipleClassTeacher() {
     // work on later
@@ -288,4 +291,5 @@ module.exports = {
   Attendance,
   MedicalRecord,
   Award,
+  ClassTeacher,
 };

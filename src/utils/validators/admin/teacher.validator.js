@@ -13,11 +13,20 @@ const teacherUpdateSchema = Joi.object({
   lastName: Joi.string().optional(),
   email: Joi.string().required(),
   password: Joi.string().required(),
-  userRole: Joi.string().default("teacher"),
   username: Joi.string().optional(),
   phoneNumber: Joi.string().optional(),
   dateOfBirth: Joi.string().optional(),
   bio: Joi.string().optional(),
+  bloodGroup: Joi.valid(
+    "A+",
+    "A-",
+    "B+",
+    "B-",
+    "AB+",
+    "AB-",
+    "O+",
+    "O-"
+  ).optional(),
 });
 
 const experienceSchema = Joi.object({

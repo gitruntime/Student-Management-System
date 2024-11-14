@@ -25,15 +25,7 @@ Class.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-    },
-    classTeacher: {
-      type: DataTypes.INTEGER,
-      references: {
-        model: Teacher,
-        key: "id",
-      },
-      field: "teacher_id",
-    },
+    }
   },
   {
     sequelize,

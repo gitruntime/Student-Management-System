@@ -5,7 +5,9 @@ const express = require("express");
 const router = express.Router();
 
 const accountRouter = require("./account.routes")
+const studentRouter = require("./student.route")
 
 router.use("/", accountRouter);
+router.use("/students",studentRouter)
 
 module.exports = router;

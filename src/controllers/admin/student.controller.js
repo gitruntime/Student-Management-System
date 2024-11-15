@@ -23,7 +23,7 @@ const studentList = tryCatch(async (req, res, next) => {
     where: { userRole: "student", tenantId: req.tenant.id },
     include: {
       model: Student,
-      as: "student",
+      as: "studentProfile",
       attributes: {
         exclude: ["tenantId", "id", "deletedAt", "classId"],
       },

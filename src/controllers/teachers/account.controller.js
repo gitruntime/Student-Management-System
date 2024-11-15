@@ -437,4 +437,4 @@ module.exports = {
   EducationView,
   EducationUpdate,
   EducationDelete,
-};
+};  

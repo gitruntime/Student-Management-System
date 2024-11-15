@@ -63,7 +63,7 @@ const teacherView = tryCatch(async (req, res) => {
       userRole: "teacher",
       tenantId: req.tenant.id,
     },
-    include: [    
+    include: [
       {
         model: Teacher,
         as: "teacherProfile",
@@ -110,8 +110,10 @@ const teacherUpdate = tryCatch(async (req, res, next) => {
   const { bio, bloodGroup, ...accountDetails } = req.validatedData;
   data.updateFormData(accountDetails);
   await data.save();
-  await data.teacherProfile.updateFormData({ bio, bloodGroup });
-  await data.teacherProfile.save();
+  if (data.teacherProfile) {
+    await data.teacherProfile.updateFormData({ bio, bloodGroup });
+    await data.teacherProfile.save();
+  }
   return res
     .status(200)
     .json({ message: "Teacher data updated successfully", data });

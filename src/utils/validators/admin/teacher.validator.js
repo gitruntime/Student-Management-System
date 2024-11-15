@@ -12,7 +12,6 @@ const teacherUpdateSchema = Joi.object({
   firstName: Joi.string().min(1).required(),
   lastName: Joi.string().optional(),
   email: Joi.string().required(),
-  password: Joi.string().required(),
   username: Joi.string().optional(),
   phoneNumber: Joi.string().optional(),
   dateOfBirth: Joi.string().optional(),

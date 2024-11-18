@@ -24,7 +24,7 @@ router.post(
   authMiddleware,
   isAdmin,
   validate(teacherCreateSchema),
-  TeacherController.teacherCreate,
+  TeacherController.teacherCreate
 );
 router.get("/:id", authMiddleware, isAdmin, TeacherController.teacherView);
 router.put(
@@ -32,7 +32,7 @@ router.put(
   authMiddleware,
   isAdmin,
   validate(teacherUpdateSchema),
-  TeacherController.teacherUpdate,
+  TeacherController.teacherUpdate
 );
 router.delete("/:id", authMiddleware, isAdmin, TeacherController.teacherDelete);
 
@@ -41,40 +41,40 @@ router.get(
   "/:teacherId/experiences",
   authMiddleware,
   isAdmin,
-  TeacherController.experienceList,
+  TeacherController.experienceList
 );
 router.post(
   "/:teacherId/experiences",
   authMiddleware,
   isAdmin,
   validate(experienceSchema),
-  TeacherController.experienceCreate,
+  TeacherController.experienceCreate
 );
 router.get(
   "/:teacherId/experiences/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.experienceView,
+  TeacherController.experienceView
 );
 router.put(
   "/:teacherId/experiences/:id",
   authMiddleware,
   isAdmin,
   validate(experienceSchema),
-  TeacherController.experienceUpdate,
+  TeacherController.experienceUpdate
 );
 router.delete(
   "/:teacherId/experiences/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.experienceDelete,
+  TeacherController.experienceDelete
 );
 
 router.get(
   "/:teacherId/educations/",
   authMiddleware,
   isAdmin,
-  TeacherController.educationList,
+  TeacherController.educationList
 );
 
 router.post(
@@ -82,14 +82,14 @@ router.post(
   authMiddleware,
   isAdmin,
   validate(educationSchema),
-  TeacherController.educationCreate,
+  TeacherController.educationCreate
 );
 
 router.get(
   "/:teacherId/educations/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.educationView,
+  TeacherController.educationView
 );
 
 router.put(
@@ -97,14 +97,14 @@ router.put(
   authMiddleware,
   isAdmin,
   validate(educationSchema),
-  TeacherController.educationUpdate,
+  TeacherController.educationUpdate
 );
 
 router.delete(
   "/:teacherId/educations/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.educationDelete,
+  TeacherController.educationDelete
 );
 
 // Certificate model CRUD
@@ -112,33 +112,33 @@ router.get(
   "/:teacherId/certifications",
   authMiddleware,
   isAdmin,
-  TeacherController.certificateList,
+  TeacherController.certificateList
 );
 router.post(
   "/:teacherId/certifications",
   authMiddleware,
   isAdmin,
   validate(certificateSchema),
-  TeacherController.certificateCreate,
+  TeacherController.certificateCreate
 );
 router.get(
   "/:teacherId/certifications/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.certificateView,
+  TeacherController.certificateView
 );
 router.put(
   "/:teacherId/certifications/:id",
   authMiddleware,
   isAdmin,
   validate(certificateSchema),
-  TeacherController.certificateUpdate,
+  TeacherController.certificateUpdate
 );
 router.delete(
   "/:teacherId/certifications/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.certificateDelete,
+  TeacherController.certificateDelete
 );
 
 // Address model CRUD
@@ -146,33 +146,33 @@ router.get(
   "/:teacherId/addresses",
   authMiddleware,
   isAdmin,
-  TeacherController.addressList,
+  TeacherController.addressList
 );
 router.post(
   "/:teacherId/addresses",
   authMiddleware,
   isAdmin,
   validate(addressSchema),
-  TeacherController.addressCreate,
+  TeacherController.addressCreate
 );
 router.get(
   "/:teacherId/addresses/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.addressView,
+  TeacherController.addressView
 );
 router.put(
   "/:teacherId/addresses/:id",
   authMiddleware,
   isAdmin,
   validate(addressSchema),
-  TeacherController.addressUpdate,
+  TeacherController.addressUpdate
 );
 router.delete(
   "/:teacherId/addresses/:id",
   authMiddleware,
   isAdmin,
-  TeacherController.addressDelete,
+  TeacherController.addressDelete
 );
 
 // // BankDetail model CRUD

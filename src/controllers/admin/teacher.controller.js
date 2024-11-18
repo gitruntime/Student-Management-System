@@ -132,21 +132,30 @@ const teacherDelete = tryCatch(async (req, res, next) => {
 const experienceList = tryCatch(async (req, res, next) => {
   const { size: limit = 10, page = 1 } = req.query;
   const { teacherId } = req.params;
+  console.log(teacherId, "this is");
+
   const teacher = await Teacher.findOne({
     where: { accountId: teacherId, tenantId: req.tenant.id },
     attributes: ["id"],
   });
+
+  console.log(teacher, "thousi");
+
+  if (!teacher) {
+    return res.status(400).json({ message: "Teacher not found" });
+  }
+
   const { rows: data, count } = await Experience.findAndCountAll({
     limit,
     offset: (page - 1) * limit,
     where: { teacherId: teacher.id, tenantId: req.tenant.id },
-    attributes: { exclude: ["tenantId", "teacherId", "deletedAt"] },
+    attributes: { exclude: ["deletedAt"] },
   });
   return res.status(200).json({
     data,
     totalCount: count,
     currentPage: page,
-    totalPages: Math.ceil(count / limit),
+    totalPages: calculateTotalPages(count, limit),
     size: limit,
   });
 });

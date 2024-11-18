@@ -17,6 +17,7 @@ const db = new Sequelize(env.DATABASE_URL, {
 const dbConnect = () => {
   db.authenticate()
     .then(() => {
+      // db.sync({ alter: true });
       logger.info("Connection has been established successfully.");
     })
     .catch((err) => {

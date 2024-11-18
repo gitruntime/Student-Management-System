@@ -117,16 +117,16 @@ Account.hasOne(Student, {
 });
 Student.belongsTo(Account, { foreignKey: "accountId", as: "accounts" });
 
-Student.belongsToMany(Exam, {
-  through: StudentExam,
-  foreignKey: "examId",
-  otherKey: "studentId",
-});
-Exam.belongsToMany(Student, {
-  through: StudentExam,
-  foreignKey: "studentId",
-  otherKey: "examId",
-});
+// Student.belongsToMany(Exam, {
+//   through: StudentExam,
+//   foreignKey: "examId",
+//   otherKey: "studentId",
+// });
+// Exam.belongsToMany(Student, {
+//   through: StudentExam,
+//   foreignKey: "studentId",
+//   otherKey: "examId",
+// });
 
 Student.belongsToMany(Event, {
   through: EventParticipation,
@@ -142,6 +142,12 @@ Event.belongsToMany(Student, {
 Student.hasMany(Award, { foreignKey: "studentId", as: "awards" });
 Award.belongsTo(Student, { foreignKey: "studentId", as: "studentProfile" });
 
+Student.hasMany(Attendance, { foreignKey: "studentId", as: "attendances" });
+Attendance.belongsTo(Student, {
+  foreignKey: "studentId",
+  as: "studentProfile",
+});
+
 // Parent ------------------------------------------------------------------------------>
 Account.hasOne(Parent, {
   foreignKey: "accountId",
@@ -151,13 +157,33 @@ Account.hasOne(Parent, {
 Parent.belongsTo(Account, { foreignKey: "accountId", as: "accounts" });
 
 // Class ------------------------------------------------------------------->
+class ClassSubject extends Model {}
+
+ClassSubject.init(
+  {
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+    },
+  },
+  {
+    sequelize,
+    underscored: true,
+    paranoid: true,
+    timestamps: true,
+    tableName: "classes_subjects",
+  }
+);
 Class.belongsToMany(Subject, {
-  through: "classes_subjects",
+  through: ClassSubject,
   foreignKey: "classId",
   otherKey: "subjectId",
 });
 Subject.belongsToMany(Class, {
-  through: "classes_subjects",
+  through: ClassSubject,
   foreignKey: "subjectId",
   otherKey: "classId",
 });
@@ -180,6 +206,9 @@ ClassTeacher.init(
   },
   {
     sequelize,
+    paranoid: true,
+    timestamps: true,
+    underscored: true,
     tableName: "classes_teachers",
   }
 );
@@ -191,6 +220,38 @@ Class.belongsToMany(Teacher, {
 });
 Teacher.belongsToMany(Class, {
   through: ClassTeacher,
+  foreignKey: "classId",
+  otherKey: "teacherId",
+});
+
+class ClassExam extends Model {}
+
+ClassExam.init(
+  {
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+    },
+  },
+  {
+    sequelize,
+    paranoid: true,
+    timestamps: true,
+    underscored: true,
+    tableName: "classes_exams",
+  }
+);
+
+Class.belongsToMany(Exam, {
+  through: ClassExam,
+  foreignKey: "teacherId",
+  otherKey: "classId",
+});
+Exam.belongsToMany(Class, {
+  through: ClassExam,
   foreignKey: "classId",
   otherKey: "teacherId",
 });
@@ -249,9 +310,6 @@ Teacher.belongsToMany(Class, {
 //   foreignKey: "classesId",
 //   otherKey: "teacherId",
 // });
-
-// Student.hasMany(Attendance, { foreignKey: "studentId", as: "attendances" });
-// Attendance.belongsTo(Student, { foreignKey: "studentId", as: "students" });
 
 // // Student.hasMany(MedicalRecord, {
 // //   foreignKey: "studentId",

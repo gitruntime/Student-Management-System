@@ -14,7 +14,7 @@ const parentRouter = require("./parent.route");
 // router.use("/permissions", permissionRouter);
 router.use("/teachers", teacherRouter);
 router.use("/students", studentRouter);
-router.use("/class", classRouter);
+router.use("/classes", classRouter);
 router.use("/subjects", subjectRouter);
 router.use("/parents", parentRouter);
 

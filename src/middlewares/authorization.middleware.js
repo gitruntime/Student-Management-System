@@ -12,13 +12,12 @@ const { HTTP_401_UNAUTHORIZED } = require("../utils/handlers/status");
  * @throws {Error} Throws an error if the user is not authorized.
  */
 const isAdmin = (req, res, next) => {
-  const { user_role } = req.user;
-
-  if (!user_role === "admin")
+  const { userRole } = req.user;
+  if (userRole !== "admin")
     return new Response(
       { message: "You dont have permission to access this page" },
       HTTP_401_UNAUTHORIZED,
-      res,
+      res
     );
   next();
 };

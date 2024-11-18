@@ -4,7 +4,11 @@ const { Tenant } = require("../core");
 const { Teacher } = require("../teachers");
 // const { TenantAbstract } = require("../core/base.model");
 
-class Class extends Model {}
+class Class extends Model {
+  updateFormData(validatedData){
+    Object.assign(this,validatedData)
+  }
+}
 
 Class.init(
   {
@@ -20,12 +24,16 @@ Class.init(
         key: "id",
       },
       field: "tenant_id",
-      allowNull:false
+      allowNull: false,
     },
     name: {
       type: DataTypes.STRING,
       allowNull: false,
-    }
+    },
+    section: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
   },
   {
     sequelize,

@@ -30,6 +30,13 @@ Attendance.init(
     status: {
       type: DataTypes.ENUM,
       values: ["present", "absent", "excused", "late"],
+      allowNull: false,
+    },
+    checkIn: {
+      type: DataTypes.TIME,
+    },
+    checkOut: {
+      type: DataTypes.TIME,
     },
   },
   {
@@ -39,7 +46,7 @@ Attendance.init(
     underscored: true,
     timestamps: true,
     paranoid: true,
-  },
+  }
 );
 
 module.exports = {

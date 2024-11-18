@@ -115,31 +115,31 @@ ExamSubject.init(
   }
 );
 
-class ExamSubjectScore extends Model {}
-// sTUDENT => exam subject score
-ExamSubjectScore.init({
-  id: {
-    type: DataTypes.INTEGER,
-    primaryKey: true,
-    autoIncrement: true,
-  },
-  tenantId: {
-    type: DataTypes.INTEGER,
-    references: {
-      model: Tenant,
-      key: "id",
-    },
-    field: "tenant_id",
-  },
-  marksObtained: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
-  grade: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-});
+// class ExamSubjectScore extends Model {}
+// // sTUDENT => exam subject score
+// ExamSubjectScore.init({
+//   id: {
+//     type: DataTypes.INTEGER,
+//     primaryKey: true,
+//     autoIncrement: true,
+//   },
+//   tenantId: {
+//     type: DataTypes.INTEGER,
+//     references: {
+//       model: Tenant,
+//       key: "id",
+//     },
+//     field: "tenant_id",
+//   },
+//   marksObtained: {
+//     type: DataTypes.INTEGER,
+//     allowNull: false,
+//   },
+//   grade: {
+//     type: DataTypes.STRING,
+//     allowNull: false,
+//   },
+// });
 
 module.exports = {
   Subject,

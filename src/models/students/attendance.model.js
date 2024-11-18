@@ -23,8 +23,8 @@ Attendance.init(
       },
       field: "tenant_id",
     },
-    date: {
-      type: DataTypes.STRING,
+    attendanceDate: {
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
     status: {

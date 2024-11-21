@@ -4,10 +4,12 @@ const express = require("express");
  */
 const router = express.Router();
 
-const accountRouter = require("./account.routes")
-const studentRouter = require("./student.route")
+const accountRouter = require("./account.routes");
+const studentRouter = require("./student.route");
+const classRoute = require("./class.route");
 
 router.use("/", accountRouter);
-router.use("/students",studentRouter)
+router.use("/students", studentRouter);
+router.use("/classes", classRoute);
 
 module.exports = router;

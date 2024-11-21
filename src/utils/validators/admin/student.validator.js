@@ -2,7 +2,7 @@ const Joi = require("joi");
 
 const studentPOSTSchema = Joi.object({
   firstName: Joi.string().required(),
-  lastName: Joi.string().optional(),
+  lastName: Joi.string().optional().allow(""),
   email: Joi.string().email().required(),
   password: Joi.string()
     .min(8)

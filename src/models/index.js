@@ -21,6 +21,7 @@ const {
 const { Teacher, Employment, Certificate, Experience } = require("./teachers");
 const { Model, DataTypes } = require("sequelize");
 const { db: sequelize } = require("../configs/db.config");
+const { Assignment } = require("./classes/class.model");
 
 // Base ---------------------------------------------------->
 
@@ -61,6 +62,7 @@ Interest.belongsToMany(Account, {
 Account.hasMany(MedicalRecord, {
   foreignKey: "accountId",
   as: "medical_records",
+  onDelete: "CASCADE",
 });
 MedicalRecord.belongsTo(Account, {
   foreignKey: "accountId",
@@ -86,6 +88,7 @@ Teacher.belongsTo(Account, { foreignKey: "accountId", as: "accountDetails" });
 Teacher.hasOne(Employment, {
   foreignKey: "teacherId",
   as: "employmentDetails",
+  onDelete: "CASCADE",
 });
 Employment.belongsTo(Teacher, {
   foreignKey: "teacherId",
@@ -95,6 +98,7 @@ Employment.belongsTo(Teacher, {
 Teacher.hasMany(Experience, {
   foreignKey: "teacherId",
   as: "experiences",
+  onDelete: "CASCADE",
 });
 Experience.belongsTo(Teacher, {
   foreignKey: "teacherId",
@@ -103,6 +107,7 @@ Experience.belongsTo(Teacher, {
 Teacher.hasMany(Education, {
   foreignKey: "teacherId",
   as: "educations",
+  onDelete: "CASCADE",
 });
 Education.belongsTo(Teacher, {
   foreignKey: "teacherId",
@@ -139,10 +144,18 @@ Event.belongsToMany(Student, {
   otherKey: "eventId",
 });
 
-Student.hasMany(Award, { foreignKey: "studentId", as: "awards" });
+Student.hasMany(Award, {
+  foreignKey: "studentId",
+  as: "awards",
+  onDelete: "CASCADE",
+});
 Award.belongsTo(Student, { foreignKey: "studentId", as: "studentProfile" });
 
-Student.hasMany(Attendance, { foreignKey: "studentId", as: "attendances" });
+Student.hasMany(Attendance, {
+  foreignKey: "studentId",
+  as: "attendances",
+  onDelete: "CASCADE",
+});
 Attendance.belongsTo(Student, {
   foreignKey: "studentId",
   as: "studentProfile",
@@ -172,7 +185,6 @@ ClassSubject.init(
   {
     sequelize,
     underscored: true,
-    paranoid: true,
     timestamps: true,
     tableName: "classes_subjects",
   }
@@ -188,41 +200,37 @@ Subject.belongsToMany(Class, {
   otherKey: "classId",
 });
 
-Class.hasMany(Student, { foreignKey: "classId", as: "students" });
+Class.hasMany(Student, {
+  foreignKey: "classId",
+  as: "students",
+  onDelete: "CASCADE",
+});
 Student.belongsTo(Class, { foreignKey: "classId", as: "studentProfile" });
 
-class ClassTeacher extends Model {
-  preventMultipleClassTeacher() {
-    // work on later
-  }
-}
+class ClassTeacher extends Model {}
 
 ClassTeacher.init(
   {
-    isClassTeacher: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
+    teacherRole: {
+      type: DataTypes.ENUM("class", "subject"),
+      defaultValue: "subject",
     },
   },
   {
     sequelize,
-    paranoid: true,
     timestamps: true,
     underscored: true,
     tableName: "classes_teachers",
   }
 );
 
-Class.belongsToMany(Teacher, {
-  through: ClassTeacher,
-  foreignKey: "teacherId",
-  otherKey: "classId",
-});
-Teacher.belongsToMany(Class, {
-  through: ClassTeacher,
-  foreignKey: "classId",
-  otherKey: "teacherId",
-});
+ClassTeacher.belongsTo(Class, { foreignKey: "classId" });
+ClassTeacher.belongsTo(Teacher, { foreignKey: "teacherId" });
+ClassTeacher.belongsTo(Subject, { foreignKey: "subjectId" });
+
+Class.hasMany(ClassTeacher, { foreignKey: "classId" });
+Teacher.hasMany(ClassTeacher, { foreignKey: "teacherId" });
+Subject.hasMany(ClassTeacher, { foreignKey: "subjectId" });
 
 class ClassExam extends Model {}
 
@@ -257,7 +265,14 @@ Exam.belongsToMany(Class, {
 });
 
 // Assignment
-// Subject.belongsToMany();
+Class.hasMany(Assignment, { foreignKey: "classId" });
+Assignment.belongsTo(Class, { foreignKey: "classId" });
+
+Subject.hasMany(Assignment, { foreignKey: "subjectId" });
+Assignment.belongsTo(Subject, { foreignKey: "subjectId" });
+
+Account.hasMany(Assignment, { foreignKey: "accountId" });
+Assignment.belongsTo(Account, { foreignKey: "accountId" });
 
 // Base ------------------------------------------------------------------------->
 

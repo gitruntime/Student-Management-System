@@ -27,7 +27,7 @@ Account.init(
     tenantId: {
       type: DataTypes.INTEGER,
       references: {
-        model: "Tenant",
+        model: Tenant,
         key: "id",
       },
     },
@@ -184,6 +184,7 @@ Account.init(
         }
       },
       afterCreate: async (user, options) => {
+        console.log(user);
         switch (user.userRole) {
           case "teacher":
             await Teacher.create({

@@ -20,11 +20,11 @@ const teacherList = tryCatch(async (req, res) => {
     limit,
     offset: (page - 1) * limit,
     where: { userRole: "teacher", tenantId: req.tenant.id },
-    // include: {
-    //   model: Teacher,
-    //   as: "teacherProfile",
-    //   attributes: ["bio", "bloodGroup"],
-    // },
+    include: {
+      model: Teacher,
+      as: "teacherProfile",
+      attributes: ["bio", "bloodGroup", "accountId"],
+    },
     attributes: ["id", "fullName", "createdAt", "firstName", "lastName"],
     order: [[sortBy, sortOrder]],
   });

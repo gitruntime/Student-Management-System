@@ -1,5 +1,11 @@
-const { Op } = require("sequelize");
-const { Class, Subject } = require("../../models");
+const { Op, Sequelize } = require("sequelize");
+const {
+  Class,
+  Subject,
+  Teacher,
+  ClassTeacher,
+  Account,
+} = require("../../models");
 const { calculateTotalPages } = require("../../utils/handlers");
 const { tryCatch } = require("../../utils/handlers/tryCatch");
 
@@ -135,6 +141,9 @@ const getSubjectsFromClass = tryCatch(async (req, res, next) => {
     where: { id, tenantId: req.tenant.id },
   });
 
+  if (!classInstance)
+    return res.status(404).json({ subjectIds: [], message: "Class not Found" });
+
   const subjectInstances = await classInstance.getSubjects({
     attributes: ["id"],
     where: {
@@ -163,7 +172,7 @@ const addSubjectstoClass = tryCatch(async (req, res, next) => {
     where: { id: subjectIds },
     attributes: ["id"],
   });
-  classInstance.addSubjects(subjectInstances, {
+  classInstance.setSubjects(subjectInstances, {
     through: {
       tenantId: req.tenant.id,
     },
@@ -175,52 +184,84 @@ const addSubjectstoClass = tryCatch(async (req, res, next) => {
 
 const getTeachersFromClass = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const classInstance = await Class.findOne({
-    where: { id, tenantId: req.tenant.id },
+  const data = await ClassTeacher.findAll({
+    where: { classId: id },
+    include: [
+      {
+        model: Teacher,
+        attributes: ["accountId"], // Direct fields in Teacher table
+        include: [
+          {
+            model: Account,
+            as: "accountDetails", // Use the correct alias from the association
+            attributes: ["id", "fullName", "firstName", "lastName"], // Fields from Account table
+          },
+        ],
+      },
+      {
+        model: Subject,
+        as: "Subject", // Alias defined in the association
+        attributes: ["id", "name", "code"], // Fields from Subject table
+      },
+    ],
+    attributes: ["id", "teacherRole", "classId", "teacherId", "subjectId"], // Fields from ClassTeacher table
   });
-
-  const subjectInstances = await classInstance.getSubjects({
-    attributes: ["id"],
-    where: {
-      tenantId: req.tenant.id,
-    },
-  });
-
-  const subjectIds = subjectInstances.map((subject) => subject.id);
 
   return res.status(200).json({
-    message: "Subjects added successfully to the class",
-    subjectIds,
+    message: "Teachers fetched successfully",
+    data,
   });
 });
 
 const addTeacherstoClass = tryCatch(async (req, res, next) => {
   // class Id
   const { id } = req.params;
-  const classInstance = await Class.findOne({
-    where: { id, tenantId: req.tenant.id },
+  const teacherInstance = await Teacher.findOne({
+    where: { accountId: req.validatedData.teacherId },
+    attributes: ["accountId", "id"],
   });
-  if (!classInstance)
-    return res.status(404).json({ message: "Class not found" });
-  const { subjectIds } = req.validatedData;
-  const subjectInstances = await Subject.findAll({
-    where: { id: subjectIds },
-    attributes: ["id"],
+
+  if (!teacherInstance) {
+    return res.status(404).json({
+      message: `Teacher with accountId ${req.validatedData.teacherId} not found.`,
+    });
+  }
+
+  const data = await ClassTeacher.findOne({
+    where: { classId: id, teacherId: teacherInstance.id },
   });
-  classInstance.addSubjects(subjectInstances, {
-    through: {
-      tenantId: req.tenant.id,
-    },
-  });
+
+  if (data) {
+    data.update({
+      subjectId: req.validatedData.subjectId,
+      teacherRole: req.validatedData.teacherRole,
+      teacherId: teacherInstance.id,
+    });
+  } else {
+    await ClassTeacher.create({
+      subjectId: req.validatedData.subjectId,
+      classId: id,
+      teacherId: teacherInstance.id,
+    });
+  }
+
   return res
     .status(200)
-    .json({ message: "Subjects added successfully to the classes" });
+    .json({ message: "Teacher added to the class Successfully" });
+});
+
+const removeTeacherFromClass = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const data = await ClassTeacher.findOne({
+    where: { id: id },
+  });
+  if (!data) return res.status(404).json({ message: "Data not Found" });
+  await data.destroy();
+  return res.status(200).json({ message: "Data removed successfully" });
 });
 
 // const examList = tryCatch(async (req, res, next) => {});
-const examCreate = tryCatch(async (req, res, next) => {
-  
-});
+const examCreate = tryCatch(async (req, res, next) => {});
 // const examView = tryCatch(async (req, res, next) => {});
 // const examUpdate = tryCatch(async (req, res, next) => {});
 // const examDelete = tryCatch(async (req, res, next) => {});
@@ -230,7 +271,6 @@ const examCreate = tryCatch(async (req, res, next) => {
 // const eventView = tryCatch(async (req, res, next) => {});
 // const eventUpdate = tryCatch(async (req, res, next) => {});
 // const eventDelete = tryCatch(async (req, res, next) => {});
-
 
 module.exports = {
   classList,
@@ -243,4 +283,8 @@ module.exports = {
   subjectDelete,
   addSubjectstoClass,
   getSubjectsFromClass,
+  addTeacherstoClass,
+  getTeachersFromClass,
+  getSubjectsFromClass,
+  removeTeacherFromClass
 };

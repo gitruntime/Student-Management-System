@@ -15,8 +15,8 @@ const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 const studentList = tryCatch(async (req, res, next) => {
-  const { page = 1, size = 10 } = req.query;
-  const offset = (page - 1) * size;
+  const { page = 1, size: limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
   const { count, rows: data } = await Account.findAndCountAll({
     page,
     offset,
@@ -24,28 +24,25 @@ const studentList = tryCatch(async (req, res, next) => {
     include: {
       model: Student,
       as: "studentProfile",
-      attributes: {
-        exclude: ["tenantId", "id", "deletedAt", "classId"],
-      },
+      attributes: ["profilePicture", "bio", "bloodGroup"],
     },
-    attributes: {
-      include: [
-        "fullName",
-        "firstName",
-        "lastName",
-        "email",
-        "username",
-        "phoneNumber",
-        "dateOfBirth",
-      ],
-    },
+    attributes: [
+      "id",
+      "fullName",
+      "firstName",
+      "lastName",
+      "email",
+      "username",
+      "phoneNumber",
+      "dateOfBirth",
+    ],
   });
   return res.status(200).json({
     data,
     totalRecords: count,
     totalPages: calculateTotalPages(count, limit),
     currentPage: page,
-    size: size,
+    size: limit,
   });
 });
 

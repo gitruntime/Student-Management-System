@@ -9,6 +9,7 @@ const { authMiddleware, isAdmin, validate } = require("../../middlewares");
 const { classSchema } = require("../../utils/validators/admin");
 const {
   classSubjectsSchema,
+  addTeachersToClassSchema,
 } = require("../../utils/validators/admin/class.validator");
 
 router.get("/", authMiddleware, isAdmin, classController.classList);
@@ -40,6 +41,25 @@ router.post(
   isAdmin,
   validate(classSubjectsSchema),
   classController.addSubjectstoClass
+);
+router.get(
+  "/:id/teachers",
+  authMiddleware,
+  isAdmin,
+  classController.getTeachersFromClass
+);
+router.post(
+  "/:id/teachers",
+  authMiddleware,
+  isAdmin,
+  validate(addTeachersToClassSchema),
+  classController.addTeacherstoClass
+);
+router.delete(
+  "/:classId/teachers/:id",
+  authMiddleware,
+  isAdmin,
+  classController.removeTeacherFromClass
 );
 
 module.exports = router;

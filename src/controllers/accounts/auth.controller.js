@@ -22,6 +22,8 @@ const login = tryCatch(async (req, res) => {
       "password",
     ],
   });
+  console.log(user,"thousi");
+  
   if (!user)
     return res
       .status(404)

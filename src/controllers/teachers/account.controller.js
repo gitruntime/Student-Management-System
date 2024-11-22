@@ -60,11 +60,7 @@ const TeacherUpdate = tryCatch(async (req, res, next) => {
 });
 
 const AddressList = tryCatch(async (req, res) => {
-  const { page = 1, size: limit = 10 } = req.query;
-  const offset = (page - 1) * limit;
-  const { rows: data, count } = await Address.findAndCountAll({
-    page,
-    offset,
+  const data = await Address.findAll({
     where: { accountId: req.user.id, tenantId: req.tenant.id },
     attributes: {
       exclude: ["deletedAt", "tenantId", "accountId"],
@@ -72,10 +68,6 @@ const AddressList = tryCatch(async (req, res) => {
   });
   return res.status(200).json({
     data,
-    total: count,
-    currentPage: page,
-    totalPages: calculateTotalPages(count, limit),
-    size: limit,
     message: "Address Fetched Successfully",
   });
 });
@@ -437,4 +429,4 @@ module.exports = {
   EducationView,
   EducationUpdate,
   EducationDelete,
-};  
+};

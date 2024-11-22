@@ -8,9 +8,12 @@ const {
   Student,
   Class,
   Subject,
+  ExamSubject,
+  ExamScore,
 } = require("./src/models");
 const { Tenant } = require("./src/models/core/tenant.model");
 const { faker } = require("@faker-js/faker");
+const { Volunteer, Goal } = require("./src/models/students/academic.model");
 
 const generatedEmails = new Set();
 
@@ -29,6 +32,9 @@ const generateUniqueEmail = () => {
     // await db.drop({ cascade: true });
     // await Tenant.sync({ force: true });
     // await Account.sync({ force: true });
+    // await Volunteer.sync({ alter: true });
+    await ExamSubject.sync({ alter: true });
+    await ExamScore.sync({ alter: true });
     await db.sync({ alter: true });
 
     // Create Super Admin Account

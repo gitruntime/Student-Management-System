@@ -20,6 +20,20 @@ const studentPOSTSchema = Joi.object({
     .optional(),
 });
 
+const AttendancesSchema = Joi.object({
+  attendanceDate: Joi.date().iso().required(),
+  status: Joi.string()
+    .valid("present", "absent", "excused", "late")
+    .required(),
+  checkIn: Joi.string().pattern(
+    /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/
+  ),
+  checkOut: Joi.string().pattern(
+    /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/
+  ),
+});
+
 module.exports = {
   studentPOSTSchema,
+  AttendancesSchema
 };

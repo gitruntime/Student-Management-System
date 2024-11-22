@@ -1,4 +1,4 @@
-const { Class, ClassTeacher, Teacher, Subject } = require("../../models");
+const { Class, ClassTeacher, Teacher, Subject, Exam } = require("../../models");
 const { Assignment } = require("../../models/classes/class.model");
 const { tryCatch, calculateTotalPages } = require("../../utils/handlers");
 
@@ -100,25 +100,36 @@ const AssignmentUpdate = tryCatch(async (req, res, next) => {
       tenantId: req.tenant.id,
     },
   });
-  if (!data) return res.status(404).json({ message: "Student not found" });
-  const { bloodGroup, bio, profilePicture, ...rest } = req.validatedData;
-  data.updateFormData(rest);
+  if (!data) return res.status(404).json({ message: "Assignment not found" });
+  data.updateFormData(req.validatedData);
   await data.save();
-  data.studentProfile.updateFormData({ bloodGroup, bio, profilePicture });
   return res
     .status(200)
-    .json({ message: "Student data updated successfully", data });
+    .json({ message: "Assignment data updated successfully", data });
 });
 
 const AssignmentDelete = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const student = await Account.findOne({
-    where: { id, userRole: "student", tenantId: req.tenant.id },
+  const assignment = await Assignment.findOne({
+    where: { id, tenantId: req.tenant.id },
   });
-  if (!student) return res.status(404).json({ message: "Student not found" });
-  await student.destroy();
-  return res.status(200).json({ message: "Student deleted successfully" });
+  if (!assignment)
+    return res.status(404).json({ message: "Assignment not found" });
+  await assignment.destroy();
+  return res.status(200).json({ message: "Assignment deleted successfully" });
 });
+
+const ExamList = tryCatch(async (req, res, next) => {
+  const { rows: data, count } = await Exam.findAndCountAll({
+    where: { createdBy: req.user.id, tenantId: req.tenant.id },
+    include: [""],
+  });
+  return res.status(200).json({ message: "Exam fetched Successfully", data });
+});
+
+const ExamCreate = tryCatch(async (req, res, next) => {});
+const ExamUpdate = tryCatch(async (req, res, next) => {});
+const ExamDelete = tryCatch(async (req, res, next) => {});
 
 module.exports = {
   classList,
@@ -127,4 +138,8 @@ module.exports = {
   AssignmentCreate,
   AssignmentUpdate,
   AssignmentDelete,
+  ExamList,
+  ExamCreate,
+  ExamUpdate,
+  ExamDelete,
 };

@@ -7,6 +7,6 @@ const router = express.Router();
 const AccountRouter = require("./account.route");
 
 // router.use("/permissions", permissionRouter);
-router.use("/accounts", AccountRouter);
+router.use("/", AccountRouter);
 
 module.exports = router;

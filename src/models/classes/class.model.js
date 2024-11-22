@@ -45,7 +45,12 @@ Class.init(
   }
 );
 
-class Assignment extends Model {}
+class Assignment extends Model {
+  async updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+    await this.save();
+  }
+}
 
 Assignment.init(
   {

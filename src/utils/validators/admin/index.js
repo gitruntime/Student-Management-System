@@ -1,5 +1,5 @@
 const { classSchema } = require("./class.validator");
-const { studentPOSTSchema } = require("./student.validator");
+const { studentPOSTSchema, AttendancesSchema } = require("./student.validator");
 const { subjectSchema } = require("./subject.validator");
 const {
   teacherCreateSchema,
@@ -16,6 +16,7 @@ const AdminValidator = {
   experienceSchema,
   certificateSchema,
   studentPOSTSchema,
+  AttendancesSchema
 };
 
 module.exports = AdminValidator;

@@ -9,6 +9,14 @@ const AssignmentSchema = Joi.object({
   subjectId: Joi.number().required(),
 });
 
+const ExamSchema = Joi.object({
+  name: Joi.string().required(),
+  date: Joi.date().iso().required(),
+  examType: Joi.string().optional().allow(),
+  isPublished: Joi.boolean().default(false),
+});
+const ExamSubjectSchema = Joi.object;
+
 module.exports = {
   AssignmentSchema,
 };

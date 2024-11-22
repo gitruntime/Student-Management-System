@@ -14,15 +14,47 @@ router.post(
   authMiddleware,
   isAdmin,
   validate(AdminValidator.studentPOSTSchema),
-  studentController.studentCreate,
+  studentController.studentCreate
 );
 router.get("/:id", authMiddleware, isAdmin, studentController.studentView);
 router.put("/:id", authMiddleware, isAdmin, studentController.studentUpdate);
 router.delete("/:id", authMiddleware, isAdmin, studentController.studentDelete);
 
+router.get(
+  "/:id/attendances",
+  authMiddleware,
+  isAdmin,
+  studentController.attendanceList
+);
+router.post(
+  "/:id/attendances",
+  authMiddleware,
+  isAdmin,
+  validate(AdminValidator.AttendancesSchema),
+  studentController.attendanceCreate
+);
+router.put(
+  "/:studentId/attendances/:id",
+  authMiddleware,
+  isAdmin,
+  validate(AdminValidator.AttendancesSchema),
+  studentController.attendanceUpdate
+);
+router.delete(
+  "/:studentId/attendances/:id",
+  authMiddleware,
+  isAdmin,
+  studentController.attendanceDelete
+);
+
 router.get("/:id/ai", authMiddleware, isAdmin, studentController.aiDashboard);
 
-// router.get("/", authMiddleware, isAdmin, studentController.studentList);
+router.get(
+  "/:id/addresses",
+  authMiddleware,
+  isAdmin,
+  studentController.addressList
+);
 // router.post("/", authMiddleware, isAdmin, studentController.studentCreate);
 // router.get("/:id", authMiddleware, isAdmin, studentController.studentView);
 // router.put("/:id", authMiddleware, isAdmin, studentController.studentUpdate);

@@ -3,8 +3,9 @@ const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 
 class Attendance extends Model {
-  updateFormData(validatedData) {
+  async updateFormData(validatedData) {
     Object.assign(this, validatedData);
+    await this.save()
   }
 }
 

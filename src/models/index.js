@@ -22,6 +22,7 @@ const { Teacher, Employment, Certificate, Experience } = require("./teachers");
 const { Model, DataTypes } = require("sequelize");
 const { db: sequelize } = require("../configs/db.config");
 const { Assignment } = require("./classes/class.model");
+const { Volunteer, Goal } = require("./students/academic.model");
 
 // Base ---------------------------------------------------->
 
@@ -122,6 +123,25 @@ Account.hasOne(Student, {
 });
 Student.belongsTo(Account, { foreignKey: "accountId", as: "accounts" });
 
+Student.hasMany(Volunteer, {
+  foreignKey: "studentId",
+  as: "volunteerings",
+  onDelete: "CASCADE",
+});
+Student.belongsTo(Volunteer, {
+  foreignKey: "studentId",
+  as: "volunteerStudentData",
+});
+
+Student.hasMany(Goal, {
+  foreignKey: "studentId",
+  as: "goals",
+  onDelete: "CASCADE",
+});
+Student.belongsTo(Goal, {
+  foreignKey: "studentId",
+  as: "goalStudentData",
+});
 // Student.belongsToMany(Exam, {
 //   through: StudentExam,
 //   foreignKey: "examId",
@@ -232,37 +252,130 @@ Class.hasMany(ClassTeacher, { foreignKey: "classId" });
 Teacher.hasMany(ClassTeacher, { foreignKey: "teacherId" });
 Subject.hasMany(ClassTeacher, { foreignKey: "subjectId" });
 
-class ClassExam extends Model {}
+// class ClassExam extends Model {}
 
-ClassExam.init(
+// ClassExam.init(
+//   {
+//     tenantId: {
+//       type: DataTypes.INTEGER,
+//       references: {
+//         model: Tenant,
+//         key: "id",
+//       },
+//     },
+//   },
+//   {
+//     sequelize,
+//     paranoid: true,
+//     timestamps: true,
+//     underscored: true,
+//     tableName: "classes_exams",
+//   }
+// );
+
+// Class.belongsToMany(Exam, {
+//   through: ClassExam,
+//   foreignKey: "teacherId",
+//   otherKey: "classId",
+// });
+// Exam.belongsToMany(Class, {
+//   through: ClassExam,
+//   foreignKey: "classId",
+//   otherKey: "teacherId",
+// });
+class ExamSubject extends Model {}
+
+ExamSubject.init(
   {
-    tenantId: {
+    id: {
       type: DataTypes.INTEGER,
-      references: {
-        model: Tenant,
-        key: "id",
-      },
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    examDate: {
+      type: DataTypes.DATE,
+      allowNull: false,
+    },
+    startTime: {
+      type: DataTypes.TIME,
+    },
+    endTime: {
+      type: DataTypes.TIME,
+    },
+    maxScore: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
     },
   },
   {
     sequelize,
-    paranoid: true,
+    modelName: "ExamSubject",
     timestamps: true,
+    paranoid: true,
     underscored: true,
-    tableName: "classes_exams",
   }
 );
 
-Class.belongsToMany(Exam, {
-  through: ClassExam,
-  foreignKey: "teacherId",
-  otherKey: "classId",
-});
-Exam.belongsToMany(Class, {
-  through: ClassExam,
+// <====================================  Exam Workflow ============================================>
+
+// Exams will be created by either Admin or Teacher, A Class can have many exam records,
+Account.hasMany(Exam, { foreignKey: "createdBy" }); // who is created.
+Exam.belongsTo(Account, { foreignKey: "createdBy" }); // who is created
+
+Class.hasMany(Exam, {
+  // in which class this exam will assigned
   foreignKey: "classId",
-  otherKey: "teacherId",
 });
+Exam.belongsTo(Class, { foreignKey: "classId" });
+
+Exam.hasMany(ExamSubject, { foreignKey: "examSubjectId" });
+ExamSubject.belongsTo(Exam, { foreignKey: "examSubjectId" });
+
+Subject.hasMany(ExamSubject, { foreignKey: "subjectId" });
+ExamSubject.belongsTo(Subject, { foreignKey: "subjectId" });
+
+class StudentExamScore extends Model {}
+
+StudentExamScore.init(
+  {
+    id: {
+      type: DataTypes.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    marksObtained: {
+      type: DataTypes.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    grade: {
+      type: DataTypes.STRING,
+    },
+  },
+  {
+    sequelize,
+    modelName: "StudentExamScore",
+    tableName: "student_exam_scores",
+    underscored: true,
+    timestamps: true,
+  }
+);
+
+Student.hasMany(StudentExamScore, {
+  foreignKey: "studentId",
+  as: "StudentExamScores",
+});
+StudentExamScore.belongsTo(Student, { foreignKey: "studentId", as: "student" });
+
+ExamSubject.hasMany(StudentExamScore, {
+  foreignKey: "examSubjectId",
+  as: "examScores",
+});
+StudentExamScore.belongsTo(ExamSubject, {
+  foreignKey: "examSubjectId",
+  as: "examSubjects",
+});
+
+// <====================================  Exam Workflow ============================================>
 
 // Assignment
 Class.hasMany(Assignment, { foreignKey: "classId" });
@@ -365,4 +478,7 @@ module.exports = {
   MedicalRecord,
   Award,
   ClassTeacher,
+  StudentExamScore,
+  ExamSubject,
+  Exam,
 };

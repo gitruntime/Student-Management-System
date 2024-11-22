@@ -30,7 +30,7 @@ const { upload } = require("./src/configs/multer.config");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(helmet());
 app.use(express.json());
-app.use(cors(corsHeader));
+app.use(cors());
 app.use("/api/docs/admin", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/docs/superadmin", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/docs/teacher", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

@@ -6,10 +6,12 @@ const {
   Attendance,
   MedicalRecord,
   Award,
+  Address,
 } = require("../../models");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { Interest } = require("../../models/core");
 const { calculateTotalPages } = require("../../utils/handlers");
+const { Sequelize, Op } = require("sequelize");
 const ENV = process.env;
 const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -134,30 +136,109 @@ const studentDelete = tryCatch(async (req, res, next) => {
   return res.status(200).json({ message: "Student deleted successfully" });
 });
 
+const addressList = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: ["accountId"],
+  });
+  const data = await Address.findAll({
+    where: { accountId: student.accountId, tenantId: req.tenant.id },
+    attributes: [
+      "id",
+      "city",
+      "state",
+      "pincode",
+      "streetAddress",
+      "country",
+      "phoneNumber",
+      "addressType",
+    ],
+  });
+  return res.status(200).json({
+    data,
+    message: "Address Fetched Successfully",
+  });
+});
+
 const attendanceList = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const { page = 1, size = 10 } = req.query;
-  const offset = (page - 1) * size;
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: ["id", "accountId"],
+  });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found.!" });
+  const {
+    page = 1,
+    size: limit = 10,
+    startDate = new Date("2024-01-01"),
+    endDate = new Date("2025-01-01"),
+  } = req.query;
+  const offset = (page - 1) * limit;
   const { rows: data, count } = await Attendance.findAndCountAll({
     page,
     offset,
-    where: { studentId, tenantId: req.tenant.id },
-    attributes: ["id", "date", "status"],
+    where: {
+      studentId: student.id,
+      tenantId: req.tenant.id,
+      attendanceDate: {
+        [Op.gte]: startDate,
+        [Op.lte]: endDate,
+      },
+    },
+    attributes: [
+      "id",
+      "attendanceDate",
+      "status",
+      "checkIn",
+      "checkOut",
+      [Sequelize.fn("COUNT", Sequelize.col("status")), "count"],
+      "status",
+    ],
+    group: ["status", "attendanceDate", "checkIn", "checkOut", "id"],
   });
+
+  const attendanceData = {
+    present: 0,
+    absent: 0,
+    late: 0,
+    excused: 0,
+  };
+
+  data.forEach((record) => {
+    if (record.status === "present") {
+      attendanceData.present++;
+    } else if (record.status === "absent") {
+      attendanceData.absent++;
+    } else if (record.late === "excused") {
+      attendanceData.excused++;
+    } else if (record.status === "late") {
+      attendanceData.late++;
+    }
+  });
+
   return res.status(200).json({
     data,
     total: count,
     currentPage: page,
     totalPages: calculateTotalPages(count, limit),
-    size: size,
+    size: limit,
+    stats: attendanceData,
     message: "Attendance Fetched Successfully",
   });
 });
 
 const attendanceCreate = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: ["id", "accountId"],
+  });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found.!" });
   const data = await Attendance.create({
-    studentId,
+    studentId: student.id,
     ...req.validatedData,
     tenantId: req.tenant.id,
   });
@@ -166,29 +247,21 @@ const attendanceCreate = tryCatch(async (req, res, next) => {
     .json({ data, message: "Attendance Created Successfully" });
 });
 
-const attendanceView = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await Attendance.findOne({
-    id,
-    tenantId: req.tenant.id,
-    attributes: ["id", "date", "status"],
-  });
-  if (!data) return res.status(404).json({ message: "Attendance not Found.!" });
-  return res
-    .status(200)
-    .json({ data, message: "Attendance Fetched Successfully.!" });
-});
-
 const attendanceUpdate = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
+  const { id, studentId } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: ["id", "accountId"],
+  });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found.!" });
   const data = await Attendance.findOne({
-    where: { id, tenantId: req.tenant.id },
+    where: { id, tenantId: req.tenant.id, studentId: student.id },
     attributes: ["id", "date", "status"],
   });
   if (!data)
     return res.status(404).json({ message: "Attendance not Found.!!" });
   data.updateFormData(req.validatedData);
-  await data.save();
   return res
     .status(200)
     .json({ data, message: "Attendance Updated Successfully.!!" });
@@ -215,7 +288,7 @@ const interestList = tryCatch(async (req, res, next) => {
     include: [
       {
         model: Interest,
-        through: { attributes: [] }, // Exclude join table attributes
+        through: { attributes: [] },
       },
     ],
   });
@@ -537,7 +610,7 @@ module.exports = {
   interestRemove,
   attendanceList,
   attendanceCreate,
-  attendanceView,
+  addressList,
   attendanceUpdate,
   attendanceDelete,
   medicalRecordList,

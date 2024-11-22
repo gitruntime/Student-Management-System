@@ -2,7 +2,11 @@ const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 
-class Exam extends Model {}
+class Exam extends Model {
+  async updateFormData(validatedData) {
+    await Object.assign(this, validatedData);
+  }
+}
 
 Exam.init(
   {
@@ -37,7 +41,12 @@ Exam.init(
         "Fifth Sem",
         "Sixth Sem",
         "Unit Test",
+        "Class Test",
       ],
+    },
+    isPublished: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   {
@@ -47,7 +56,7 @@ Exam.init(
     underscored: true,
     paranoid: true,
     timestamps: true,
-  },
+  }
 );
 
 module.exports = {

@@ -11,6 +11,7 @@ const {
   StudentProfileSchema,
   StudentVolunteerSchema,
   AddressSchema,
+  interestSchema,
 } = require("../../utils/validators/students/account.validator");
 
 router.get("/profile", authMiddleware, AccountController.ViewProfileData);
@@ -52,6 +53,13 @@ router.put(
   AccountController.GoalUpdate
 );
 router.delete("/goals/:id", authMiddleware, AccountController.GoalDelete);
+router.get("/interests", authMiddleware, AccountController.InterestList);
+router.post(
+  "/interests",
+  authMiddleware,
+  validate(interestSchema),
+  AccountController.InterestCreate
+);
 router.get("/volunteers", authMiddleware, AccountController.VolunteerList);
 router.post(
   "/volunteers",

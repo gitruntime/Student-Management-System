@@ -6,6 +6,7 @@ const {
   Certificate,
   Address,
   Education,
+  ClassTeacher,
 } = require("../../models");
 const { calculateTotalPages } = require("../../utils/handlers");
 
@@ -24,6 +25,11 @@ const teacherList = tryCatch(async (req, res) => {
       model: Teacher,
       as: "teacherProfile",
       attributes: ["bio", "bloodGroup", "accountId"],
+      include: [
+        {
+          model: ClassTeacher,
+        },
+      ],
     },
     attributes: ["id", "fullName", "createdAt", "firstName", "lastName"],
     order: [[sortBy, sortOrder]],

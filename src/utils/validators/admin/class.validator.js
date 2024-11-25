@@ -15,8 +15,13 @@ const addTeachersToClassSchema = Joi.object({
   teacherRole: Joi.string().valid("subject", "class").default("subject"),
 });
 
+const addStudentsToClassSchema = Joi.object({
+  studentIds: Joi.array().items(Joi.number()).min(1).required().unique(),
+});
+
 module.exports = {
   classSchema,
   classSubjectsSchema,
   addTeachersToClassSchema,
+  addStudentsToClassSchema
 };

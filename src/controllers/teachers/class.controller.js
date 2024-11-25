@@ -1,4 +1,11 @@
-const { Class, ClassTeacher, Teacher, Subject, Exam } = require("../../models");
+const {
+  Class,
+  ClassTeacher,
+  Teacher,
+  Subject,
+  Exam,
+  ExamSubject,
+} = require("../../models");
 const { Assignment } = require("../../models/classes/class.model");
 const { tryCatch, calculateTotalPages } = require("../../utils/handlers");
 
@@ -24,16 +31,20 @@ const classList = tryCatch(async (req, res) => {
     .status(200)
     .json({ data, message: "Class fetched successfully.!" });
 });
+
+
+
 const classView = tryCatch(async (req, res) => {});
 
 const AssignmentList = tryCatch(async (req, res, next) => {
   const { page = 1, size: limit = 10 } = req.query;
   const offset = (page - 1) * limit;
 
-  // Find the teacher instance associated with the logg ed-in user
+  // Find the teacher instance associated with the logged-in user
   const teacherInstance = await Teacher.findOne({
     where: { accountId: req.user.id },
   });
+
   if (!teacherInstance) {
     return res.status(404).json({ message: "Teacher not found" });
   }
@@ -42,12 +53,9 @@ const AssignmentList = tryCatch(async (req, res, next) => {
   const classList = await ClassTeacher.findAll({
     where: { teacherId: teacherInstance.id },
   });
-  console.log(classList, "class list");
 
   const classIds = classList.map((cls) => cls.classId); // Extract class IDs
-  console.log(classIds);
 
-  // Paginated assignment fetch
   const { count, rows: data } = await Assignment.findAndCountAll({
     offset,
     limit,
@@ -72,7 +80,6 @@ const AssignmentCreate = tryCatch(async (req, res, next) => {
   const classInstance = await Class.findOne({
     where: { id: req.validatedData.classId, tenantId: req.tenant.id },
   });
-  console.log(classInstance);
 
   if (!classInstance)
     return res.status(404).json({ message: "Selected class is not found" });
@@ -120,16 +127,83 @@ const AssignmentDelete = tryCatch(async (req, res, next) => {
 });
 
 const ExamList = tryCatch(async (req, res, next) => {
+  const { page = 1, size: limit = 10 } = req.query;
+  const offset = (page - 1) * limit;
   const { rows: data, count } = await Exam.findAndCountAll({
+    page,
+    offset,
     where: { createdBy: req.user.id, tenantId: req.tenant.id },
-    include: [""],
+    include: {
+      model: ExamSubject,
+      as: "examSubjects",
+    },
   });
-  return res.status(200).json({ message: "Exam fetched Successfully", data });
+  return res
+    .status(200)
+    .json({ message: "Exam fetched Successfully", data, totalCount: count });
 });
 
-const ExamCreate = tryCatch(async (req, res, next) => {});
-const ExamUpdate = tryCatch(async (req, res, next) => {});
-const ExamDelete = tryCatch(async (req, res, next) => {});
+const ExamCreate = tryCatch(async (req, res, next) => {
+  const data = await Exam.create({
+    ...req.validatedData,
+    tenantId: req.tenant.id,
+    assignedBy: req.user.id,
+  });
+  return res.status(201).json({ message: "Exam created Successfully", data });
+});
+
+const ExamUpdate = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const examInstance = await Exam.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!examInstance)
+    return res.status(404).json({ message: "Exam not found.!!" });
+  if (examInstance.isPublished)
+    return res
+      .status(400)
+      .json({ message: "Exam already published you cant edit" });
+
+  examInstance.updateFormData(req.validatedData);
+  return res.status(200).json({ message: "Exam updated Successfully" });
+});
+
+const ExamDelete = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const examInstance = await Exam.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!examInstance)
+    return res.status(404).json({ message: "Exam not found.!!" });
+  if (examInstance.isPublished) {
+    return res
+      .status(400)
+      .json({ message: "Exam already published.! Cant delete" });
+  }
+  await examInstance.destroy();
+  return res.status(200).json({ message: "Wxam deleted Successfully" });
+});
+
+const ExamSubjectCreate = tryCatch(async (req, res, next) => {
+  // Exam id
+  const { id } = req.params;
+  const examInstance = await Exam.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!examInstance)
+    return res.status(404).json({ message: "Exam not found.!" });
+  const { isPublished, ...examSubject } = req.validatedData;
+  const data = await ExamSubject.create({
+    examSubject,
+    tenantId: req.tenant.id,
+    examId: examInstance.id,
+  });
+  examInstance.isPublished = isPublished;
+  examInstance.save();
+  return res
+    .status(201)
+    .json({ message: "Exam subject created Successfully.!" }, data);
+});
 
 module.exports = {
   classList,
@@ -142,4 +216,5 @@ module.exports = {
   ExamCreate,
   ExamUpdate,
   ExamDelete,
+  ExamSubjectCreate,
 };

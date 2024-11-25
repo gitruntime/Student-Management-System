@@ -7,6 +7,10 @@ const {
   MedicalRecord,
   Award,
   Address,
+  StudentExamScore,
+  ExamSubject,
+  Exam,
+  Subject,
 } = require("../../models");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { Interest } = require("../../models/core");
@@ -26,7 +30,7 @@ const studentList = tryCatch(async (req, res, next) => {
     include: {
       model: Student,
       as: "studentProfile",
-      attributes: ["profilePicture", "bio", "bloodGroup"],
+      attributes: ["profilePicture", "bio", "bloodGroup", "classId"],
     },
     attributes: [
       "id",
@@ -171,7 +175,7 @@ const attendanceList = tryCatch(async (req, res, next) => {
     return res.status(404).json({ message: "Requested student not found.!" });
   const {
     page = 1,
-    size: limit = 10,
+    size: limit = 100,
     startDate = new Date("2024-01-01"),
     endDate = new Date("2025-01-01"),
   } = req.query;
@@ -211,7 +215,7 @@ const attendanceList = tryCatch(async (req, res, next) => {
       attendanceData.present++;
     } else if (record.status === "absent") {
       attendanceData.absent++;
-    } else if (record.late === "excused") {
+    } else if (record.status === "excused") {
       attendanceData.excused++;
     } else if (record.status === "late") {
       attendanceData.late++;
@@ -250,14 +254,14 @@ const attendanceCreate = tryCatch(async (req, res, next) => {
 const attendanceUpdate = tryCatch(async (req, res, next) => {
   const { id, studentId } = req.params;
   const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
+    where: { accountId: studentId, tenantId: req.tenant.id },
     attributes: ["id", "accountId"],
   });
   if (!student)
     return res.status(404).json({ message: "Requested student not found.!" });
   const data = await Attendance.findOne({
     where: { id, tenantId: req.tenant.id, studentId: student.id },
-    attributes: ["id", "date", "status"],
+    attributes: ["id", "attendanceDate", "status"],
   });
   if (!data)
     return res.status(404).json({ message: "Attendance not Found.!!" });
@@ -488,7 +492,11 @@ const AwardDelete = tryCatch(async (req, res, next) => {
 
 const aiDashboard = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const [studentData, attendanceData, medicalData, interestData, awardData] =
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: ["id", "accountId"],
+  });
+  const [studentData, attendanceData, interestData, examScoreData] =
     await Promise.all([
       Account.findOne({
         where: { id, tenantId: req.tenant.id },
@@ -506,41 +514,61 @@ const aiDashboard = tryCatch(async (req, res, next) => {
             ],
           },
         },
-        attributes: [
-          "fullName",
-          "firstName",
-          "lastName",
-          "email",
-          "username",
-          "phoneNumber",
-          "dateOfBirth",
-        ],
+        attributes: ["fullName", "firstName", "lastName", "dateOfBirth"],
       }),
       Attendance.findAll({
-        where: { studentId: id, tenantId: req.tenant.id },
-        attributes: ["id", "date", "status"],
+        where: { studentId: student.id, tenantId: req.tenant.id },
+        attributes: ["id", "attendanceDate", "status"],
       }),
-      MedicalRecord.findAll({
-        where: { studentId: id, tenantId: req.tenant.id },
-        attributes: {
-          exclude: ["createdAt", "deletedAt", "updatedAt", "tenantId"],
-        },
+      Account.findOne({
+        where: { id },
+        include: [
+          {
+            model: Interest,
+            through: { attributes: [] },
+          },
+        ],
+        attributes: ["id"],
       }),
-      Interest.findAll({
-        include: {
-          model: Student,
-          where: { id },
-          attributes: [],
-          through: { attributes: [] },
-        },
-        attributes: ["id", "name"],
+      StudentExamScore.findAll({
+        where: { studentId: student.id },
+        include: [
+          {
+            model: ExamSubject,
+            as: "examSubjects",
+            include: [
+              {
+                model: Exam,
+                as: "exam",
+              },
+              {
+                model: Subject,
+              },
+            ],
+          },
+        ],
       }),
-      Award.findAll({
-        where: { studentId: id, tenantId: req.tenant.id },
-        attributes: {
-          exclude: ["createdAt", "deletedAt", "updatedAt", "tenantId"],
-        },
-      }),
+      // MedicalRecord.findAll({
+      //   where: { studentId: id, tenantId: req.tenant.id },
+      //   attributes: {
+      //     exclude: ["createdAt", "deletedAt", "updatedAt", "tenantId"],
+      //   },
+      // }),
+      // Interest.findAll({
+      //   include: {
+      //     model: Account,
+      //     where: { id },
+      //     attributes: [],
+      //     through: { attributes: [] },
+      //   },
+      //   attributes: ["id", "name"],
+      // }),
+      // Award.findAll({
+      //   where: { studentId: id, tenantId: req.tenant.id },
+      //   attributes: {
+      //     exclude: ["createdAt", "deletedAt", "updatedAt", "tenantId"],
+      //   },
+      // }),
     ]);
 
   const plainStudentData = studentData
@@ -549,31 +577,31 @@ const aiDashboard = tryCatch(async (req, res, next) => {
   const plainAttendanceData = attendanceData
     ? attendanceData.map((item) => item.get({ plain: true }))
     : null;
-  const plainMedicalData = medicalData
-    ? medicalData.map((item) => item.get({ plain: true }))
+  const plainExamScoreData = examScoreData
+    ? examScoreData.map((item) => item.get({ plain: true }))
     : null;
   const plainInterestData = interestData
-    ? interestData.map((item) => item.get({ plain: true }))
+    ? interestData?.Interests.map((item) => item.get({ plain: true }))
     : null;
 
-  const plainAwardData = awardData
-    ? awardData.map((item) => item.get({ plain: true }))
-    : null;
+  // const plainAwardData = awardData
+  //   ? awardData.map((item) => item.get({ plain: true }))
+  //   : null;
 
   console.log(plainStudentData, "studentData");
   console.log(plainAttendanceData, "attendanceData");
-  console.log(plainMedicalData, "medicalData");
+  console.log(plainExamScoreData, "examScoreData");
   console.log(plainInterestData, "interestData");
-  console.log(plainAwardData, "interestData");
+  // console.log(plainAwardData, "interestData");
 
   const promptResult1 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainMedicalData, ...plainInterestData, ...plainAwardData })} Based on the student's interests and outstanding academic performance, what potential career paths could lead to success?`
+    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`
   );
   const promptResult2 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainMedicalData, ...plainInterestData, ...plainAwardData })} Based on the student's physical strength what are the sports career that he can choose.`
+    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`
   );
   const promptResult3 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainMedicalData, ...plainInterestData, ...plainAwardData })} Based on the student's medical record and his interest is he fit for the olympics championship`
+    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?`
   );
   return res.status(200).json({
     message: "Data Fetched Successfully",
@@ -581,23 +609,107 @@ const aiDashboard = tryCatch(async (req, res, next) => {
       {
         id: 1,
         prompt:
-          "Based on the student's interests and outstanding academic performance, what potential career paths could lead to success?",
-        result: promptResult1,
+          "Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests",
+        result: promptResult1.response.text(),
       },
       {
         id: 2,
         prompt:
-          "Based on the student's physical strength what are the sports career that he can choose.",
-        promptResult2,
+          "Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.",
+        result: promptResult2.response.text(),
       },
       {
         id: 3,
-        prompt: "",
-        result: promptResult3,
+        prompt:
+          "What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?",
+        result: promptResult3.response.text(),
       },
     ],
   });
 });
+
+const ListMarks = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+  });
+  console.log(student);
+
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found" });
+  const data = await StudentExamScore.findAll({
+    where: { studentId: student.id },
+    include: [
+      {
+        model: ExamSubject,
+        as: "examSubjects",
+        include: [
+          {
+            model: Exam,
+            as: "exam",
+          },
+          {
+            model: Subject,
+          },
+        ],
+      },
+    ],
+  });
+  return res.status(200).json({ message: "Marks fetched Successfully", data });
+});
+
+const CreateMarks = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+  });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found" });
+
+  const data = await StudentExamScore.create({
+    ...req.validatedData,
+    studentId: student.id,
+    tenantId: req.tenant.id,
+  });
+
+  return res.status(201).json({ message: "Mark created successfully.", data });
+});
+
+const UpdateMarks = tryCatch(async (req, res, next) => {
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+  });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found" });
+
+  const data = await StudentExamScore.findOne;
+
+  return res.status(201).json({ message: "Mark created successfully.", data });
+});
+
+const InterestList = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const user = await Account.findOne({
+    where: { id, tenantId: req.tenant.id },
+    include: [
+      {
+        model: Interest,
+        through: { attributes: [] },
+      },
+    ],
+  });
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  return res
+    .status(200)
+    .json({ message: "Interest fetched successfully", data: user.Interests });
+});
+
+const ListAward = tryCatch(async (req, res, next) => {});
+const CreateAward = tryCatch(async (req, res, next) => {});
+const UpdateAward = tryCatch(async (req, res, next) => {});
+const DeleteAward = tryCatch(async (req, res, next) => {});
 
 module.exports = {
   studentList,
@@ -624,4 +736,7 @@ module.exports = {
   AwardUpdate,
   AwardDelete,
   aiDashboard,
+  ListMarks,
+  CreateMarks,
+  InterestList,
 };

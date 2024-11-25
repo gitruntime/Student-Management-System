@@ -4,7 +4,8 @@ const { Tenant } = require("../core");
 
 class Exam extends Model {
   async updateFormData(validatedData) {
-    await Object.assign(this, validatedData);
+    Object.assign(this, validatedData);
+    await this.save();
   }
 }
 
@@ -27,22 +28,12 @@ Exam.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    date: {
-      type: DataTypes.STRING,
+    startDate: {
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
-    examType: {
-      type: DataTypes.ENUM,
-      values: [
-        "First Sem",
-        "Second Sem",
-        "Third Sem",
-        "Fourth Sem",
-        "Fifth Sem",
-        "Sixth Sem",
-        "Unit Test",
-        "Class Test",
-      ],
+    endDate: {
+      type: DataTypes.DATEONLY,
     },
     isPublished: {
       type: DataTypes.BOOLEAN,

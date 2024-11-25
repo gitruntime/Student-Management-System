@@ -93,9 +93,7 @@ const AddressUpdate = tryCatch(async (req, res, next) => {
 const AddressDelete = tryCatch(async (req, res, next) => {
   const { id } = req.params;
   const data = await Address.findOne({
-    where:{ id,
-    accountId: req.user.id,
-    tenantId: req.tenant.id,}
+    where: { id, accountId: req.user.id, tenantId: req.tenant.id },
   });
   if (!data) return res.status(404).json({ message: "Address not found" });
   await data.destroy();
@@ -105,23 +103,37 @@ const AddressDelete = tryCatch(async (req, res, next) => {
 const InterestList = tryCatch(async (req, res, next) => {
   const user = await Account.findOne({
     where: { id: req.user.id, tenantId: req.tenant.id },
+    include: [
+      {
+        model: Interest,
+        through: { attributes: [] },
+      },
+    ],
   });
-  const data = user.getInterests();
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
   return res
     .status(200)
-    .json({ message: "Interest fetched successfully", data });
+    .json({ message: "Interest fetched successfully", data: user.Interests });
 });
 
 const InterestCreate = tryCatch(async (req, res, next) => {
   const user = await Account.findOne({
-    where: { id: req.user.id, tenantId: req.user.id },
+    where: { id: req.user.id, tenantId: req.tenant.id },
   });
+
+  console.log(user, "000000000000000000000000000000000000");
+
+  if (!user) return res.status(404).json({ message: "User not found.!!" });
 
   const { interests } = req.validatedData;
 
   const interestInstances = await Promise.all(
     interests.map((interest) =>
-      Interest.findOrCreate({ where: { name: interest } })
+      Interest.findOrCreate({
+        where: { name: interest, tenantId: req.tenant.id },
+      })
     )
   );
 
@@ -131,7 +143,7 @@ const InterestCreate = tryCatch(async (req, res, next) => {
 
 const GoalList = tryCatch(async (req, res, next) => {
   const user = await Student.findOne({
-    where: { id: req.user.id, tenantId: req.user.id },
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
   });
   if (!user) return res.status(404).json({ message: "User not found.!" });
   const data = await Goal.findAll({
@@ -233,6 +245,9 @@ const VolunteerDelete = tryCatch(async (req, res, next) => {
   return res.status(200).json({ message: "Volunteer deleted Successfully.!" });
 });
 
+// const Dashboard = tryCatch( async (req,res,next)=>{
+//   const data =
+// })
 module.exports = {
   ViewProfileData,
   UpdateProfileData,

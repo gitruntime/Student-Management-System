@@ -6,6 +6,9 @@ const router = express.Router();
 const studentController = require("../../controllers/admin/student.controller");
 const { authMiddleware, isAdmin, validate } = require("../../middlewares");
 const AdminValidator = require("../../utils/validators/admin");
+const {
+  CreateMarksSchema,
+} = require("../../utils/validators/admin/student.validator");
 
 // Account and Student model CRUD
 router.get("/", authMiddleware, isAdmin, studentController.studentList);
@@ -19,7 +22,12 @@ router.post(
 router.get("/:id", authMiddleware, isAdmin, studentController.studentView);
 router.put("/:id", authMiddleware, isAdmin, studentController.studentUpdate);
 router.delete("/:id", authMiddleware, isAdmin, studentController.studentDelete);
-
+router.get(
+  "/:id/interests",
+  authMiddleware,
+  isAdmin,
+  studentController.InterestList
+);
 router.get(
   "/:id/attendances",
   authMiddleware,
@@ -54,6 +62,14 @@ router.get(
   authMiddleware,
   isAdmin,
   studentController.addressList
+);
+router.get("/:id/marks", authMiddleware, isAdmin, studentController.ListMarks);
+router.post(
+  "/:id/marks",
+  authMiddleware,
+  validate(CreateMarksSchema),
+  isAdmin,
+  studentController.CreateMarks
 );
 // router.post("/", authMiddleware, isAdmin, studentController.studentCreate);
 // router.get("/:id", authMiddleware, isAdmin, studentController.studentView);

@@ -36,9 +36,13 @@ const StudentVolunteerSchema = Joi.object({
   duration: Joi.string().required(),
   impact: Joi.string().optional().allow(""),
 });
+const interestSchema = Joi.object({
+  interests: Joi.array().items(Joi.string()).min(1).unique().required(),
+});
 module.exports = {
   StudentGoalSchema,
   StudentVolunteerSchema,
   StudentProfileSchema,
-  AddressSchema
+  AddressSchema,
+  interestSchema,
 };

@@ -5,9 +5,13 @@ const {
   Teacher,
   ClassTeacher,
   Account,
+  Exam,
+  ExamSubject,
+  Student,
 } = require("../../models");
 const { calculateTotalPages } = require("../../utils/handlers");
 const { tryCatch } = require("../../utils/handlers/tryCatch");
+const { db: sequelize } = require("../../configs/db.config");
 
 const classList = tryCatch(async (req, res, next) => {
   const {
@@ -260,17 +264,88 @@ const removeTeacherFromClass = tryCatch(async (req, res, next) => {
   return res.status(200).json({ message: "Data removed successfully" });
 });
 
-// const examList = tryCatch(async (req, res, next) => {});
-const examCreate = tryCatch(async (req, res, next) => {});
-// const examView = tryCatch(async (req, res, next) => {});
-// const examUpdate = tryCatch(async (req, res, next) => {});
-// const examDelete = tryCatch(async (req, res, next) => {});
+const addStudentToClass = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const classInstance = await Class.findOne({
+    where: { id, tenantId: req.tenant.id },
+  });
+  if (!classInstance)
+    return res.status(404).json({ message: "Class not found" });
+  const { studentIds } = req.validatedData;
+  const students = await Account.findAll({
+    where: { id: studentIds, tenantId: req.tenant.id, userRole: "student" },
+    include: [
+      {
+        model: Student,
+        as: "studentProfile",
+      },
+    ],
+  });
 
-// const eventList = tryCatch(async (req, res, next) => {});
-// const eventCreate = tryCatch(async (req, res, next) => {});
-// const eventView = tryCatch(async (req, res, next) => {});
-// const eventUpdate = tryCatch(async (req, res, next) => {});
-// const eventDelete = tryCatch(async (req, res, next) => {});
+  if (students.length !== studentIds.length) {
+    return res.status(400).json({
+      message: "Some students were not found or are not valid student accounts",
+    });
+  }
+
+  try {
+    await Promise.all(
+      students.map(async (student) => {
+        await student.studentProfile.update({ classId: id });
+      })
+    );
+
+    return res.status(200).json({
+      message: "Students added to class successfully",
+      // data: updatedClass,
+    });
+  } catch (error) {
+    await Promise.all(
+      students.map(async (student) => {
+        if (student.studentProfile) {
+          await student.studentProfile.update({ classId: null });
+        }
+      })
+    );
+
+    return res.status(400).json({ message: error });
+  }
+});
+
+const fetchClassStudents = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const data = await Account.findAll({
+    where: { tenantId: req.tenant.id, userRole: "student" },
+    include: [
+      {
+        model: Student,
+        as: "studentProfile",
+        where: { classId: id },
+      },
+    ],
+  });
+  return res
+    .status(200)
+    .json({ message: "Student data fetched Successfully.!", data });
+});
+
+// Repeated API
+const getSubjectDataUsingClass = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const data = await Subject.findAll({
+    include: [
+      {
+        model: Class,
+        through: { attributes: [] },
+        where: { id },
+      },
+    ],
+  });
+
+  return res
+    .status(200)
+    .json({ data, message: "Subject Data Fetched successfully" });
+});
 
 module.exports = {
   classList,
@@ -286,5 +361,8 @@ module.exports = {
   addTeacherstoClass,
   getTeachersFromClass,
   getSubjectsFromClass,
-  removeTeacherFromClass
+  removeTeacherFromClass,
+  addStudentToClass,
+  fetchClassStudents,
+  getSubjectDataUsingClass,
 };

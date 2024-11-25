@@ -10,6 +10,7 @@ const { classSchema } = require("../../utils/validators/admin");
 const {
   classSubjectsSchema,
   addTeachersToClassSchema,
+  addStudentsToClassSchema,
 } = require("../../utils/validators/admin/class.validator");
 
 router.get("/", authMiddleware, isAdmin, classController.classList);
@@ -35,6 +36,12 @@ router.get(
   isAdmin,
   classController.getSubjectsFromClass
 );
+router.get(
+  "/:id/subjectsData",
+  authMiddleware,
+  isAdmin,
+  classController.getSubjectDataUsingClass
+);
 router.post(
   "/:id/subjects",
   authMiddleware,
@@ -54,6 +61,19 @@ router.post(
   isAdmin,
   validate(addTeachersToClassSchema),
   classController.addTeacherstoClass
+);
+router.get(
+  "/:id/students",
+  authMiddleware,
+  isAdmin,
+  classController.fetchClassStudents
+);
+router.post(
+  "/:id/students",
+  authMiddleware,
+  isAdmin,
+  validate(addStudentsToClassSchema),
+  classController.addStudentToClass
 );
 router.delete(
   "/:classId/teachers/:id",

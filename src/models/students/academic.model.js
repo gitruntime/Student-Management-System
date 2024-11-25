@@ -119,6 +119,14 @@ Goal.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
+    },
     type: {
       type: DataTypes.ENUM("long term", "short term"),
       defaultValue: "short term",

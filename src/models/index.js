@@ -50,14 +50,14 @@ Account.hasMany(Certificate, {
 Certificate.belongsTo(Account, { foreignKey: "accountId", as: "account" });
 
 Account.belongsToMany(Interest, {
-  through: "students_interests",
-  foreignKey: "interestId",
-  otherKey: "accountId",
-});
-Interest.belongsToMany(Account, {
-  through: "students_interests",
+  through: "account_interests",
   foreignKey: "accountId",
   otherKey: "interestId",
+});
+Interest.belongsToMany(Account, {
+  through: "account_interests",
+  foreignKey: "interestId",
+  otherKey: "accountId",
 });
 
 Account.hasMany(MedicalRecord, {
@@ -283,7 +283,12 @@ Subject.hasMany(ClassTeacher, { foreignKey: "subjectId" });
 //   foreignKey: "classId",
 //   otherKey: "teacherId",
 // });
-class ExamSubject extends Model {}
+class ExamSubject extends Model {
+  async updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+    await this.save();
+  }
+}
 
 ExamSubject.init(
   {
@@ -291,6 +296,15 @@ ExamSubject.init(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+    },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
+      allowNull: false,
     },
     examDate: {
       type: DataTypes.DATE,
@@ -328,8 +342,8 @@ Class.hasMany(Exam, {
 });
 Exam.belongsTo(Class, { foreignKey: "classId" });
 
-Exam.hasMany(ExamSubject, { foreignKey: "examSubjectId" });
-ExamSubject.belongsTo(Exam, { foreignKey: "examSubjectId" });
+Exam.hasMany(ExamSubject, { foreignKey: "examId", as: "examSubjects" });
+ExamSubject.belongsTo(Exam, { foreignKey: "examId", as: "exam" });
 
 Subject.hasMany(ExamSubject, { foreignKey: "subjectId" });
 ExamSubject.belongsTo(Subject, { foreignKey: "subjectId" });
@@ -342,6 +356,13 @@ StudentExamScore.init(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+    },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
     },
     marksObtained: {
       type: DataTypes.DECIMAL(10, 2),

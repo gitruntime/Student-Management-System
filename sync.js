@@ -33,8 +33,7 @@ const generateUniqueEmail = () => {
     // await Tenant.sync({ force: true });
     // await Account.sync({ force: true });
     // await Volunteer.sync({ alter: true });
-    await ExamSubject.sync({ alter: true });
-    await ExamScore.sync({ alter: true });
+    // await ExamSubject.sync({ alter: true });
     await db.sync({ alter: true });
 
     // Create Super Admin Account

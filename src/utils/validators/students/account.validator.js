@@ -28,6 +28,7 @@ const AddressSchema = Joi.object({
 const StudentGoalSchema = Joi.object({
   name: Joi.string().required(),
   type: Joi.string().valid("long term", "short term").required(),
+  description: Joi.string().allow("").optional(),
 });
 
 const StudentVolunteerSchema = Joi.object({
@@ -39,10 +40,14 @@ const StudentVolunteerSchema = Joi.object({
 const interestSchema = Joi.object({
   interests: Joi.array().items(Joi.string()).min(1).unique().required(),
 });
+const interestDeleteSchema = Joi.object({
+  interests: Joi.array().items(Joi.number()).min(1).unique().required(),
+});
 module.exports = {
   StudentGoalSchema,
   StudentVolunteerSchema,
   StudentProfileSchema,
   AddressSchema,
   interestSchema,
+  interestDeleteSchema,
 };

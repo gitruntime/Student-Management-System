@@ -5,8 +5,10 @@ const express = require("express");
 const router = express.Router();
 
 const AccountRouter = require("./account.route");
+const ClassRouter = require("./class.route");
 
 // router.use("/permissions", permissionRouter);
 router.use("/", AccountRouter);
+router.use("/classes", ClassRouter);
 
 module.exports = router;

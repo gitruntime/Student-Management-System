@@ -594,36 +594,41 @@ const aiDashboard = tryCatch(async (req, res, next) => {
   console.log(plainInterestData, "interestData");
   // console.log(plainAwardData, "interestData");
 
-  const promptResult1 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`
-  );
+  // const promptResult1 = await model.generateContent(
+  //   `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`
+  // );
   const promptResult2 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`
+    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Generate chart data in JSON format for Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.
+    Give me the output based on the below structure with tailwind color.
+          const chartData = [  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },  { browser: "other", visitors: 190, fill: "var(--color-other)" },]
+    `
   );
-  const promptResult3 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?`
-  );
+  // const promptResult3 = await model.generateContent(
+  //   `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?`
+  // );
   return res.status(200).json({
     message: "Data Fetched Successfully",
     data: [
-      {
-        id: 1,
-        prompt:
-          "Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests",
-        result: promptResult1.response.text(),
-      },
+      // {
+      //   id: 1,
+      //   prompt:
+      //     "Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.",
+      //   result: promptResult1.response.text(),
+      // },
       {
         id: 2,
-        prompt:
-          "Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.",
+        prompt: `Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.
+          
+          
+          `,
         result: promptResult2.response.text(),
       },
-      {
-        id: 3,
-        prompt:
-          "What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?",
-        result: promptResult3.response.text(),
-      },
+      // {
+      //   id: 3,
+      //   prompt:
+      //     "What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?",
+      //   result: promptResult3.response.text(),
+      // },
     ],
   });
 });

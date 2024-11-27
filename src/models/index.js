@@ -76,7 +76,7 @@ Account.hasOne(Admin, {
   as: "adminProfile",
   onDelete: "CASCADE",
 });
-Admin.belongsTo(Account, { foreignKey: "accountId", as: "accounts" });
+Admin.belongsTo(Account, { foreignKey: "accountId", as: "accountDetails" });
 
 // Teacher ---------------------------------------------------------------------------->
 Account.hasOne(Teacher, {
@@ -405,8 +405,8 @@ Assignment.belongsTo(Class, { foreignKey: "classId" });
 Subject.hasMany(Assignment, { foreignKey: "subjectId" });
 Assignment.belongsTo(Subject, { foreignKey: "subjectId" });
 
-Account.hasMany(Assignment, { foreignKey: "accountId" });
-Assignment.belongsTo(Account, { foreignKey: "accountId" });
+Account.hasMany(Assignment, { foreignKey: "assignedBy" });
+Assignment.belongsTo(Account, { foreignKey: "assignedBy" });
 
 // Base ------------------------------------------------------------------------->
 
@@ -502,4 +502,5 @@ module.exports = {
   StudentExamScore,
   ExamSubject,
   Exam,
+  ClassSubject,
 };

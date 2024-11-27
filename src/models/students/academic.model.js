@@ -119,6 +119,9 @@ Goal.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
+    description: {
+      type: DataTypes.STRING,
+    },
     tenantId: {
       type: DataTypes.INTEGER,
       references: {
@@ -155,6 +158,14 @@ Volunteer.init(
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
+    },
+    tenantId: {
+      type: DataTypes.INTEGER,
+      references: {
+        model: Tenant,
+        key: "id",
+      },
+      field: "tenant_id",
     },
     organisationName: {
       type: DataTypes.STRING,

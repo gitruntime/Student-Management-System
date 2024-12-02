@@ -64,6 +64,11 @@ Experience.init(
         key: "id",
       },
     },
+    company: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue:"Company 1"
+    },
     department: {
       type: DataTypes.STRING,
       allowNull: false,

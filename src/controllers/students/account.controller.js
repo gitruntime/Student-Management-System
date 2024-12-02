@@ -322,13 +322,7 @@ const Dashboard = tryCatch(async (req, res, next) => {
       },
     ],
   });
-
-  console.log(
-    "==============================================",
-    exams,
-    "==========================================="
-  );
-
+  
   const performanceData = {};
 
   exams.forEach((exam) => {

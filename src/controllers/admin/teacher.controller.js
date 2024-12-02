@@ -247,7 +247,7 @@ const certificateList = tryCatch(async (req, res, next) => {
   const { rows: data, count } = await Certificate.findAndCountAll({
     limit,
     offset: (page - 1) * limit,
-    where: { teacherId: teacherId, tenantId: req.tenant.id },
+    where: { accountId: teacherId, tenantId: req.tenant.id },
   });
   return res.status(200).json({
     data,
@@ -301,19 +301,24 @@ const certificateDelete = tryCatch(async (req, res) => {
 });
 
 const educationList = tryCatch(async (req, res) => {
-  const { size: limit = 10, page = 1 } = req.query;
   const { teacherId } = req.params;
-  const { rows: data, count } = await Education.findAndCountAll({
-    limit,
-    offset: (page - 1) * limit,
-    where: { teacherId: teacherId, tenantId: req.tenant.id },
+  const teacher = await Teacher.findOne({
+    where: {
+      accountId: teacherId,
+      tenantId: req.tenant.id,
+    },
+    attributes: ["id", "accountId"],
+  });
+
+  console.log(teacher);
+
+  if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+  const data = await Education.findAll({
+    where: { teacherId: teacher.id, tenantId: req.tenant.id },
   });
   return res.status(200).json({
     data,
-    totalCount: count,
-    currentPage: page,
-    totalPages: Math.ceil(count / limit),
-    size: limit,
+    message: "Education fetched successfully.!!",
   });
 });
 
@@ -360,19 +365,15 @@ const educationDelete = tryCatch(async (req, res) => {
 });
 
 const addressList = tryCatch(async (req, res, next) => {
-  const { size: limit = 10, page = 1 } = req.query;
   const { teacherId: accountId } = req.params;
-  const { rows: data, count } = await Address.findAndCountAll({
-    limit,
-    offset: (page - 1) * limit,
+  console.log(accountId);
+
+  const data = await Address.findAll({
     where: { accountId, tenantId: req.tenant.id },
   });
   return res.status(200).json({
     data,
-    totalCount: count,
-    currentPage: page,
-    totalPages: Math.ceil(count / limit),
-    size: limit,
+    message: "Address fetched Successfully.!!",
   });
 });
 
@@ -482,6 +483,10 @@ const addressDelete = tryCatch(async (req, res, next) => {
 //   await bankDetail.destroy();
 //   return res.status(200).json({ message: "Bank Detail Deleted Successfully" });
 // });
+
+const DocumentList = tryCatch(async (req,res)=>{
+  const data = await Document
+})
 
 module.exports = {
   teacherList,

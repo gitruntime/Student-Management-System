@@ -148,33 +148,6 @@ router.get(
   isAdmin,
   TeacherController.addressList
 );
-router.post(
-  "/:teacherId/addresses",
-  authMiddleware,
-  isAdmin,
-  validate(addressSchema),
-  TeacherController.addressCreate
-);
-router.get(
-  "/:teacherId/addresses/:id",
-  authMiddleware,
-  isAdmin,
-  TeacherController.addressView
-);
-router.put(
-  "/:teacherId/addresses/:id",
-  authMiddleware,
-  isAdmin,
-  validate(addressSchema),
-  TeacherController.addressUpdate
-);
-router.delete(
-  "/:teacherId/addresses/:id",
-  authMiddleware,
-  isAdmin,
-  TeacherController.addressDelete
-);
-
 // // BankDetail model CRUD
 // router.post(
 //   "/:teacherId/bank",

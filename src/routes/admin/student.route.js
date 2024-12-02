@@ -71,8 +71,14 @@ router.post(
   isAdmin,
   studentController.CreateMarks
 );
-// router.post("/", authMiddleware, isAdmin, studentController.studentCreate);
-// router.get("/:id", authMiddleware, isAdmin, studentController.studentView);
+router.get(
+  "/:id/performances",
+  authMiddleware,
+  isAdmin,
+  studentController.PerformanceData
+);
+router.get("/:id/goals", authMiddleware, isAdmin, studentController.GoalList);
+router.get("/:id/volunteers", authMiddleware, isAdmin, studentController.VolunteerList);
 // router.put("/:id", authMiddleware, isAdmin, studentController.studentUpdate);
 // router.delete("/:id", authMiddleware, isAdmin, studentController.studentDelete);
 

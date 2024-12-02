@@ -16,7 +16,7 @@ const examList = tryCatch(async (req, res, next) => {
     whereCondition.classId = student.classId;
   }
 
-  const data = await Exam.findAll({
+  let data = await Exam.findAll({
     where: whereCondition,
     include: [
       {
@@ -30,6 +30,33 @@ const examList = tryCatch(async (req, res, next) => {
       },
     ],
   });
+
+  data = data.map((exam) => {
+    return {
+      id: exam.id,
+      name: exam.name,
+      startDate: exam.startDate,
+      endDate: exam.endDate,
+      isPublished: exam.isPublished,
+      classId: exam.classId,
+      subjects: exam.examSubjects.map((subject) => {
+        return {
+          subjectId: subject.subjectId,
+          maxScore: subject.maxScore,
+          startTime: subject.startTime,
+          endTime: subject.endTime,
+          examDate: subject.examDate,
+        };
+      }),
+      subjectDetails: exam.examSubjects.map((subject) => {
+        return {
+          id:subject.Subject.id,
+          subjectName: subject.Subject.name + " " + subject.Subject.code,
+        };
+      }),
+    };
+  });
+
   return res.status(200).json({ message: "Exam fetched successfully", data });
 });
 

@@ -11,11 +11,14 @@ const {
   ExamSubject,
   Exam,
   Subject,
+  Class,
 } = require("../../models");
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 const { Interest } = require("../../models/core");
 const { calculateTotalPages } = require("../../utils/handlers");
-const { Sequelize, Op } = require("sequelize");
+const { Sequelize, Op, where } = require("sequelize");
+const { Goal, Volunteer } = require("../../models/students/academic.model");
+const { db: sequelize } = require("../../configs/db.config");
 const ENV = process.env;
 const genAI = new GoogleGenerativeAI(ENV.GEMINI_API_KEY);
 const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
@@ -31,6 +34,13 @@ const studentList = tryCatch(async (req, res, next) => {
       model: Student,
       as: "studentProfile",
       attributes: ["profilePicture", "bio", "bloodGroup", "classId"],
+      include: [
+        {
+          model: Class,
+          as: "classDetails",
+          attributes: ["name", "section"],
+        },
+      ],
     },
     attributes: [
       "id",
@@ -41,6 +51,7 @@ const studentList = tryCatch(async (req, res, next) => {
       "username",
       "phoneNumber",
       "dateOfBirth",
+      "createdAt",
     ],
   });
   return res.status(200).json({
@@ -490,13 +501,130 @@ const AwardDelete = tryCatch(async (req, res, next) => {
   return res.status(200).json({ message: "Award Deleted Successfully.!!" });
 });
 
+const extractReason = (data) => {
+  const regex = new RegExp(
+    `\\*\\*Aptitude.*?:([\\s\\S]*?)\\*\\*Curiosity`,
+    "g"
+  );
+  const match = regex.exec(data);
+
+  return match ? match[1].trim() : "";
+};
+
+const extractCareer = (data) => {
+  console.log("Starting to extract career path recommendations...");
+
+  if (data.includes("**Career Path Recommendations:**")) {
+    console.log("Career Path Recommendations section found!");
+
+    const regex = /```json\s*\[\s*(.*?)\s*\]\s*```/gs;
+    const matches = [];
+    let match;
+
+    // Use the regex to find all the JSON blocks in the string
+    while ((match = regex.exec(data)) !== null) {
+      matches.push(match[0]);
+    }
+
+    if (matches.length >= 2) {
+      console.log("Found multiple JSON blocks. Skipping the first one.");
+
+      let cleanedData = matches[1].replace(/```json|```/g, "").trim();
+      console.log(
+        "Cleaned JSON data (removed code block markers):",
+        cleanedData
+      );
+
+      cleanedData = cleanedData.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
+      console.log("Removed comments:", cleanedData);
+
+      cleanedData = cleanedData.replace(/(\w+):/g, '"$1":'); // Ensure keys are quoted properly
+      console.log("Ensured proper quoting of keys:", cleanedData);
+
+      cleanedData = cleanedData.replace(/,\s*}/g, "}"); // Remove trailing commas
+      cleanedData = cleanedData.replace(/,\s*\]/g, "]"); // Remove trailing commas
+      console.log("Removed trailing commas:", cleanedData);
+
+      try {
+        const careerRecommendations = JSON.parse(cleanedData);
+        console.log(
+          "Successfully parsed career recommendations:",
+          careerRecommendations
+        );
+        return [true, careerRecommendations]; // Return parsed career path recommendations
+      } catch (error) {
+        console.error("Error parsing career recommendation data:", error);
+        return [false, "Error parsing career recommendation data."];
+      }
+    } else {
+      console.warn("Not enough JSON data blocks found.");
+      return [false, "Career recommendation data not found or invalid format."];
+    }
+  } else {
+    console.warn("No career path section found in the data.");
+    return [false, "No career recommendation data found."];
+  }
+};
+
+const extractChart = (data) => {
+  if (data.includes("**Skill Assessment:**")) {
+    // Match the JSON data inside the ```json code block
+    const regex = /```json\s*\[\s*(.*?)\s*\]\s*```/gs;
+    const match = data.match(regex);
+
+    if (match && match[0]) {
+      let cleanedData = match[0].replace(/```json|```/g, "").trim(); // Remove code block markers
+      console.log("Raw Cleaned Data (Skill Assessment):", cleanedData); // Debug log
+
+      // Clean up the JSON string by ensuring it's in the correct format
+      cleanedData = cleanedData.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
+      cleanedData = cleanedData.replace(/(\w+):/g, '"$1":'); // Ensure keys are quoted properly
+      cleanedData = cleanedData.replace(/,\s*}/g, "}"); // Remove trailing commas before closing braces
+      cleanedData = cleanedData.replace(/,\s*\]/g, "]"); // Remove trailing commas before closing brackets
+
+      console.log("Cleaned Data (Skill Assessment):", cleanedData); // Debug log
+
+      try {
+        const skillAssessment = JSON.parse(cleanedData); // Parse the cleaned-up data
+        return [true, skillAssessment]; // Return parsed data if successful
+      } catch (error) {
+        console.error("Error parsing skill assessment data:", error);
+        return [false, "Error parsing skill assessment data."];
+      }
+    } else {
+      return [false, "Skill assessment data not found or invalid format."];
+    }
+  } else {
+    return [false, "No skill assessment data found."];
+  }
+};
+
+const extractImportantNote = (data) => {
+  const noteRegex = new RegExp(
+    `\\*\\*Important Note:\\*\\*([\\s\\S]*?)(?=\\n\\*\\*|$)`, // Capture everything after **Important Note:** until next ** or end
+    "g"
+  );
+  const noteMatch = noteRegex.exec(data);
+
+  const importantNote = noteMatch
+    ? noteMatch[1].trim().replace(/\n+/g, " ") // Replace multiple newlines with a space
+    : "";
+
+  return importantNote;
+};
+
+const extractRoadmap = (data) => {
+  const jsObjectString = data.replace(/```json|```/g, "").trim();
+  return [true, JSON.parse(jsObjectString)];
+};
+
 const aiDashboard = tryCatch(async (req, res, next) => {
   const { id } = req.params;
   const student = await Student.findOne({
     where: { accountId: id, tenantId: req.tenant.id },
     attributes: ["id", "accountId"],
   });
-  const [studentData, attendanceData, interestData, examScoreData] =
+  const [studentData, attendanceData, interestData, examScoreData, goalData] =
     await Promise.all([
       Account.findOne({
         where: { id, tenantId: req.tenant.id },
@@ -548,6 +676,9 @@ const aiDashboard = tryCatch(async (req, res, next) => {
           },
         ],
       }),
+      Goal.findAll({
+        where: { studentId: student.id, tenantId: req.tenant.id },
+      }),
       // MedicalRecord.findAll({
       //   where: { studentId: id, tenantId: req.tenant.id },
       //   attributes: {
@@ -584,29 +715,105 @@ const aiDashboard = tryCatch(async (req, res, next) => {
     ? interestData?.Interests.map((item) => item.get({ plain: true }))
     : null;
 
+  const plainGoalData = goalData
+    ? goalData.map((item) => item.get({ plain: true }))
+    : null;
+
   // const plainAwardData = awardData
   //   ? awardData.map((item) => item.get({ plain: true }))
   //   : null;
 
-  console.log(plainStudentData, "studentData");
-  console.log(plainAttendanceData, "attendanceData");
-  console.log(plainExamScoreData, "examScoreData");
-  console.log(plainInterestData, "interestData");
   // console.log(plainAwardData, "interestData");
 
   // const promptResult1 = await model.generateContent(
   //   `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`
   // );
   const promptResult2 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Generate chart data in JSON format for Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.
-    Give me the output based on the below structure with tailwind color.
-          const chartData = [  { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },  { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },  { browser: "edge", visitors: 173, fill: "var(--color-edge)" },  { browser: "other", visitors: 190, fill: "var(--color-other)" },]
-    `
+    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData, ...plainExamScoreData, ...plainGoalData })}
+  
+  **Prompt:**
+  
+  Analyze the student's profile, focusing on their academic performance, extracurricular activities, and stated interests. 
+  
+  **Task 1: Skill Assessment**
+  Assess the student's **aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity**. 
+  - If sufficient data is available, provide a **percentage-based rating** for each skill, **grounded in specific examples** from the student's profile.
+  - If no relevant data is available for a skill, assign a **value of 0%** for that skill and note that it is due to insufficient information.
+  
+  **Task 2: Career Path Recommendations**
+  Based on the skill assessment, suggest **5 potential career paths** that align with the student's strengths and interests. 
+  - If sufficient data is available, provide a **brief description** and explain how the student's skills and interests make them a good fit.
+  - If the data is insufficient to recommend career paths, indicate that career recommendations could not be generated due to lack of information.
+
+  **Output Format:**
+  
+  **Skill Assessment:**
+  [
+    { skill: "Aptitude", value: <>, fill: "var(--color-chrome)", evidence: "<>" },
+    { skill: "Logical thinking", value: <>, fill: "var(--color-safari)", evidence: "<>" },
+    // ... other skills
+  ]
+  
+  **Career Path Recommendations:**
+  [
+    { role: "No recommendations available", description: "Insufficient data to suggest potential career paths." }
+  ]
+  
+  **Note:** Ensure that all assessments and recommendations are **directly supported by evidence** from the student's profile. For missing data, explicitly provide fallback values as specified. Avoid speculative claims or assumptions beyond the provided data.`
   );
-  // const promptResult3 = await model.generateContent(
-  //   `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?`
-  // );
-  return res.status(200).json({
+
+  const promptResultText2 = promptResult2.response.text();
+
+  console.log(
+    "=================================",
+    promptResultText2,
+    "==================================="
+  );
+
+  const [responded, chartData] = extractChart(promptResultText2);
+  const reason = extractReason(promptResultText2);
+  const note = extractImportantNote(promptResultText2);
+  const [careerResponded, careerData] = extractCareer(promptResultText2);
+
+  console.log(careerData[0].role);
+
+  let roadmapData = {};
+  let haveRoadmap = false;
+  if (
+    careerData[0].role &&
+    careerData[0].role !== "No recommendations available"
+  ) {
+    const promptResult3 = await model.generateContent(
+      `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} What is a realistic timeline to become an ${careerData[0].role}? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?
+      
+      Give me the output based on the below structure.
+      const Roadmap = {
+      "title":"<>",
+      "subtitle":"<>",
+      "timeline": "<>",
+      "key_steps": [
+          {
+              "step": "<>",
+              "icon" : "<lucid-react> (Component) Eg:- <AlertCircle className="h-4 w-4" />"
+              "skills": [<>,<>,<>],
+              "timeframe": "<>"
+          },
+          ....
+      ],
+      "potential_challenges": [
+          {
+              "challenge": "<>",
+              "strategy": "<>"
+          },
+          .....
+      ]
+      }
+      `
+    );
+    [haveRoadmap, roadmapData] = extractRoadmap(promptResult3.response.text());
+  }
+
+  let responseData = {
     message: "Data Fetched Successfully",
     data: [
       // {
@@ -617,20 +824,25 @@ const aiDashboard = tryCatch(async (req, res, next) => {
       // },
       {
         id: 2,
-        prompt: `Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.
-          
-          
-          `,
-        result: promptResult2.response.text(),
+        prompt: `Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`,
+        result: {
+          chartData: { haveData: responded, chart: chartData },
+          careerData: { haveData: careerResponded, career: careerData },
+        },
+        response: promptResultText2,
       },
-      // {
-      //   id: 3,
-      //   prompt:
-      //     "What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?",
-      //   result: promptResult3.response.text(),
-      // },
+      {
+        id: 3,
+        prompt:
+          "What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?",
+        result: {
+          roadmapData: { haveData: haveRoadmap, roadmap: roadmapData },
+        },
+      },
     ],
-  });
+  };
+
+  return res.status(200).json(responseData);
 });
 
 const ListMarks = tryCatch(async (req, res, next) => {
@@ -711,10 +923,225 @@ const InterestList = tryCatch(async (req, res, next) => {
     .json({ message: "Interest fetched successfully", data: user.Interests });
 });
 
+const GoalList = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const user = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: [],
+    include: [
+      {
+        model: Goal,
+        as: "goals",
+        attributes: ["id", "name", "description", "type"],
+      },
+    ],
+  });
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  return res
+    .status(200)
+    .json({ message: "Goals fetched successfully", data: user.goals });
+});
+
+const VolunteerList = tryCatch(async (req, res) => {
+  const { id } = req.params;
+  const user = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: [],
+    include: [
+      {
+        model: Volunteer,
+        as: "volunteerings",
+        attributes: ["id", "organisationName", "role", "duration"],
+      },
+    ],
+  });
+
+  if (!user) return res.status(404).json({ message: "User not found" });
+
+  return res.status(200).json({
+    message: "Volunteers fetched successfully",
+    data: user.volunteerings,
+  });
+});
+
 const ListAward = tryCatch(async (req, res, next) => {});
 const CreateAward = tryCatch(async (req, res, next) => {});
 const UpdateAward = tryCatch(async (req, res, next) => {});
 const DeleteAward = tryCatch(async (req, res, next) => {});
+
+const getAttendanceCountByMonth = (data) => {
+  // Initialize attendance count for all months with 0
+  const monthOrder = [
+      "January", "February", "March", "April", "May", "June", 
+      "July", "August", "September", "October", "November", "December"
+  ];
+  const attendanceCount = monthOrder.reduce((acc, month) => {
+      acc[month] = 0; // Initialize to 0 for all months
+      return acc;
+  }, {});
+
+  // Count attendance for present and late statuses
+  data.forEach(item => {
+      const date = new Date(item.attendanceDate);
+      const month = date.toLocaleString('default', { month: 'long' });
+
+      if (item.status === "present" || item.status === "late") { // Only count present or late statuses
+          attendanceCount[month]++;
+      }
+  });
+
+  // Convert the attendance count object to the desired array format
+  const result = monthOrder.map(month => ({
+      month,
+      attendanceCount: attendanceCount[month],
+  }));
+
+  return result;
+};
+
+const PerformanceData = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  console.log(id);
+
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    include: [
+      {
+        model: Attendance,
+        as: "attendances",
+        attributes: ["id", "attendanceDate", "status", "checkIn", "checkOut"],
+      },
+    ],
+  });
+  if (!student) {
+    return res.status(200).json({ message: "Student not found" });
+  }
+  // const performanceData = await StudentExamScore.findAll({
+  //   where: { studentId: student.id },
+  //   include: [
+  //     {
+  //       model: ExamSubject,
+  //       as: "examSubjects",
+  //       attributes: ["subjectId"],
+  //     },
+  //   ],
+  //   attributes: [
+  //     "studentId",
+  //     [sequelize.fn("SUM", sequelize.col("marks_obtained")), "totalMarks"],
+  //     [sequelize.fn("COUNT", sequelize.col("exam_subject_id")), "examCount"],
+  //   ],
+  //   group: [
+  //     "student_id",
+  //     "exam_subject_id",
+  //     "examSubjects.id",
+  //     "examSubjects.subject_id",
+  //   ],
+  // });
+  const exams = await Exam.findAll({
+    attributes: ["id", "startDate"],
+    include: [
+      {
+        model: ExamSubject,
+        as: "examSubjects",
+        include: [
+          {
+            model: Subject,
+            attributes: ["name"],
+          },
+          {
+            model: StudentExamScore,
+            as: "examScores",
+            where: { studentId: student.id },
+            attributes: ["marksObtained"],
+          },
+        ],
+      },
+    ],
+  });
+
+  const performanceData = {};
+
+  exams.forEach((exam) => {
+    const month = new Date(exam.startDate).toLocaleString("default", {
+      month: "short",
+    });
+
+    if (!performanceData[month]) {
+      performanceData[month] = {};
+    }
+
+    exam.examSubjects.forEach((examSubject) => {
+      const subjectName = examSubject.Subject.name;
+
+      if (!performanceData[month][subjectName]) {
+        performanceData[month][subjectName] = { totalMarks: 0, count: 0 };
+      }
+
+      examSubject.examScores.forEach((score) => {
+        performanceData[month][subjectName].totalMarks += parseFloat(
+          score.marksObtained
+        );
+        performanceData[month][subjectName].count += 1;
+      });
+    });
+  });
+
+  const ScorePerformance = Object.entries(performanceData).map(
+    ([month, subjects]) => {
+      const entry = { month };
+      for (const [subject, { totalMarks, count }] of Object.entries(subjects)) {
+        entry[subject] = (totalMarks / count).toFixed(2);
+      }
+      return entry;
+    }
+  );
+
+  const calendarMonths = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const subjects = [
+    ...new Set(
+      ScorePerformance.flatMap((item) =>
+        Object.keys(item).filter((key) => key !== "month")
+      )
+    ),
+  ];
+
+  const ScorePerformanceStructuredData = calendarMonths.map((month) => {
+    const monthData = { month };
+    subjects.forEach((subject) => {
+      const dataForMonth = ScorePerformance.find(
+        (item) => item.month === month
+      );
+      monthData[subject] =
+        dataForMonth && dataForMonth[subject] !== undefined
+          ? Number(dataForMonth[subject])
+          : 0;
+    });
+
+    return monthData;
+  });
+
+  return res.status(200).json({
+    message: "Performance fetched Successfully",
+    marks: ScorePerformanceStructuredData,
+    attendances: getAttendanceCountByMonth(student.attendances),
+  });
+});
 
 module.exports = {
   studentList,
@@ -744,4 +1171,7 @@ module.exports = {
   ListMarks,
   CreateMarks,
   InterestList,
+  PerformanceData,
+  GoalList,
+  VolunteerList,
 };

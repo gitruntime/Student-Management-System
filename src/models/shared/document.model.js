@@ -1,15 +1,15 @@
 const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
+// const { TenantAbstract } = require("../core");
 
-class Exam extends Model {
-  async updateFormData(validatedData) {
+class Document extends Model {
+  updateFormData(validatedData) {
     Object.assign(this, validatedData);
-    await this.save();
   }
 }
 
-Exam.init(  
+Document.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -22,34 +22,23 @@ Exam.init(
         model: Tenant,
         key: "id",
       },
-      field: "tenant_id",
     },
-    name: {
+    title: {
       type: DataTypes.STRING,
       allowNull: false,
     },
-    startDate: {
-      type: DataTypes.DATEONLY,
+    documentPaths: {
+      type: DataTypes.JSON,
       allowNull: false,
-    },
-    endDate: {
-      type: DataTypes.DATEONLY,
-    },
-    isPublished: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
     },
   },
   {
     sequelize,
-    modelName: "Exam",
-    tableName: "exams",
+    tableName: "documents",
     underscored: true,
-    paranoid: true,
     timestamps: true,
+    paranoid: true,
   }
 );
 
-module.exports = {
-  Exam,
-};
+module.exports = { Document };

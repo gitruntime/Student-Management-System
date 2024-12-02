@@ -1,7 +1,13 @@
-const { Op } = require("sequelize");
-const { Account, Attendance } = require("../../models");
-const { Event } = require("../../models/classes");
+const { Op, Sequelize, fn, col } = require("sequelize");
+const {
+  Account,
+  Attendance,
+  StudentExamScore,
+  ExamSubject,
+} = require("../../models");
+const { Event, Subject } = require("../../models/classes");
 const { tryCatch } = require("../../utils/handlers");
+const { db: sequelize } = require("../../configs/db.config");
 
 const calculateGrowth = (current, previous) => {
   if (!previous || previous === 0) {
@@ -39,7 +45,6 @@ const Dashboard = tryCatch(async (req, res, next) => {
       },
     },
   });
-
 
   const totalTeachers = await Account.count({
     where: {
@@ -85,7 +90,6 @@ const Dashboard = tryCatch(async (req, res, next) => {
     },
   });
 
-
   const upcomingEvents = await Event.count({
     where: {
       tenantId: req.tenant.id,
@@ -109,6 +113,78 @@ const Dashboard = tryCatch(async (req, res, next) => {
     ? Math.ceil((new Date(nextEvent.date) - new Date()) / (1000 * 60 * 60 * 24))
     : null;
 
+  const academicPerformanceData = await StudentExamScore.findAll({
+    attributes: [
+      [sequelize.fn("AVG", sequelize.col("marks_obtained")), "averageMarks"],
+      "examSubjects.id",
+      "examSubjects.tenant_id",
+      "examSubjects.exam_date",
+      "examSubjects.start_time",
+      "examSubjects.end_time",
+      "examSubjects.max_score",
+    ],
+    include: [
+      {
+        model: ExamSubject,
+        as: "examSubjects", // Alias should match the defined alias
+        attributes: [
+          "id",
+          "tenantId",
+          "examDate",
+          "startTime",
+          "endTime",
+          "maxScore",
+        ],
+        include: [
+          {
+            model: Subject,
+            attributes: ["id", "name", "code"],
+          },
+        ],
+      },
+    ],
+    group: [
+      "examSubjects.id",
+      "examSubjects.tenant_id",
+      "examSubjects.exam_date",
+      "examSubjects.start_time",
+      "examSubjects.end_time",
+      "examSubjects.max_score",
+      "examSubjects->Subject.id",
+      "examSubjects->Subject.name",
+      "examSubjects->Subject.code",
+    ],
+    raw:true
+  });
+
+  const attendanceOverview = await Attendance.findAll({
+    attributes: [
+      [
+        fn("DATE_TRUNC", "month", col("attendance_date")),
+        "month",
+      ],
+      [
+        Sequelize.literal(`
+          ROUND(
+            (SUM(CASE WHEN status = 'present' THEN 1 ELSE 0 END) * 100.0) / COUNT(status), 2
+          )
+        `),
+        "attendance_percentage",
+      ],
+    ],
+    where: {
+      tenantId:req.tenant.id,
+    },
+    group: [fn("DATE_TRUNC", "month", col("attendance_date"))],
+    order: [[fn("DATE_TRUNC", "month", col("attendance_date")), "ASC"]],
+  });
+
+  const attendanceData = attendanceOverview.map((entry) => ({
+    month: entry.getDataValue("month"),
+    userType: entry.getDataValue("user_type"),
+    attendancePercentage: entry.getDataValue("attendance_percentage"),
+  })); 
+
   const data = {
     totalStudents: {
       count: totalStudents,
@@ -126,6 +202,12 @@ const Dashboard = tryCatch(async (req, res, next) => {
       count: upcomingEvents,
       nextInDays: nextEventInDays,
     },
+    academicPerformance: academicPerformanceData.map((record) => ({
+      averageMarks: parseFloat(record["averageMarks"]).toFixed(2),
+      subject: record["examSubjects.Subject.name"],
+      code: record["examSubjects.Subject.code"]
+    })),
+    attendanceData
   };
 
   return res.status(200).json({

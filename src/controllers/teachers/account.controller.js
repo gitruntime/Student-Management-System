@@ -5,6 +5,7 @@ const {
   Experience,
   Certificate,
   Education,
+  Document,
 } = require("../../models/index");
 
 const { tryCatch, calculateTotalPages } = require("../../utils/handlers");
@@ -400,11 +401,30 @@ const EducationDelete = tryCatch(async (req, res) => {
   return res.status(200).json({ message: "Education Deleted Successfully.!" });
 });
 
-const MedicalRecordList = tryCatch(async (req, res) => {});
-const MedicalRecordCreate = tryCatch(async (req, res) => {});
-const MedicalRecordView = tryCatch(async (req, res) => {});
-const MedicalRecordUpdate = tryCatch(async (req, res) => {});
-const MedicalRecordDelete = tryCatch(async (req, res) => {});
+const DocumentList = tryCatch(async (req, res) => {
+  const data = await Document.findAll({
+    where: {
+      accountId: req.user.id,
+      tenantId: req.tenant.id,
+    },
+  });
+  return res
+    .status(200)
+    .json({ message: "Documents fetched successfully.!", data });
+});
+const DocumentCreate = tryCatch(async (req, res) => {
+  const data = await Document.create({
+    ...req.validatedData,
+    tenantId: req.tenant.id,
+    accountId: req.user.id,
+  });
+
+  return res
+    .status(200)
+    .json({ message: "Document created successfully.!", data });
+});
+const DocumentUpdate = tryCatch(async (req, res) => {});
+const DocumentDelete = tryCatch(async (req, res) => {});
 
 module.exports = {
   TeacherView,

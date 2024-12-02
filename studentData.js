@@ -10,12 +10,10 @@ const { faker } = require("@faker-js/faker");
     });
     const year = 2008;
     const usedDates = new Set();
-    console.log("Class Data fetching started.....");
     
     const [classData, created] = await Class.findOrCreate({
         where: { tenantId: tenantData.id, name: "STD 10" },
     });
-    console.log("Student Data Creation Started........");
     for (let index = 0; index < 10; index++) {
       const firstName = faker.helpers.uniqueArray(faker.person.firstName, 1)[0];  // Accessing the first element of the array
       const lastName = faker.helpers.uniqueArray(faker.person.lastName, 1)[0];  // Accessing the first element of the array

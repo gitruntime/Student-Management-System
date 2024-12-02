@@ -23,6 +23,7 @@ const { Model, DataTypes } = require("sequelize");
 const { db: sequelize } = require("../configs/db.config");
 const { Assignment } = require("./classes/class.model");
 const { Volunteer, Goal } = require("./students/academic.model");
+const { Document } = require("./shared/document.model");
 
 // Base ---------------------------------------------------->
 
@@ -41,6 +42,13 @@ Account.hasMany(Address, {
   onDelete: "CASCADE",
 });
 Address.belongsTo(Account, { foreignKey: "accountId", as: "account" });
+
+Account.hasMany(Document, {
+  foreignKey: "accountId",
+  as: "documents",
+  onDelete: "CASCADE",
+});
+Document.belongsTo(Account, { foreignKey: "accountId", as: "account" });
 
 Account.hasMany(Certificate, {
   foreignKey: "accountId",
@@ -225,7 +233,7 @@ Class.hasMany(Student, {
   as: "students",
   onDelete: "CASCADE",
 });
-Student.belongsTo(Class, { foreignKey: "classId", as: "studentProfile" });
+Student.belongsTo(Class, { foreignKey: "classId", as: "classDetails" });
 
 class ClassTeacher extends Model {}
 
@@ -503,4 +511,5 @@ module.exports = {
   ExamSubject,
   Exam,
   ClassSubject,
+  Document,
 };

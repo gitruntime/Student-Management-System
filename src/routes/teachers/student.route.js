@@ -10,6 +10,8 @@ const {
   AttendancePOSTSchema,
 } = require("../../utils/validators/teacher/student.validator");
 const { attendanceSchema } = require("../../utils/validators/common.validator");
+const AdminValidator = require("../../utils/validators/admin");
+const { CreateMarksSchema } = require("../../utils/validators/admin/student.validator");
 
 router.get("/", authMiddleware, studentController.StudentList);
 router.post(
@@ -27,27 +29,48 @@ router.put(
 );
 router.delete("/:id", authMiddleware, studentController.StudentDelete);
 
+router.get("/:id/interests", authMiddleware, studentController.InterestList);
 router.get(
-  "/:studentId/attendances",
+  "/:id/attendances",
   authMiddleware,
-  studentController.AttendanceList
+  studentController.attendanceList
 );
 router.post(
-  "/:studentId/attendances",
+  "/:id/attendances",
   authMiddleware,
-  validate(AttendancePOSTSchema),
-  studentController.AttendanceCreate
+  validate(AdminValidator.AttendancesSchema),
+  studentController.attendanceCreate
 );
 router.put(
   "/:studentId/attendances/:id",
   authMiddleware,
-  validate(AttendancePOSTSchema),
-  studentController.AttendanceUpdate
+  validate(AdminValidator.AttendancesSchema),
+  studentController.attendanceUpdate
 );
 router.delete(
   "/:studentId/attendances/:id",
   authMiddleware,
-  studentController.AttendanceDelete
+  studentController.attendanceDelete
 );
+
+router.get("/:id/ai", authMiddleware, studentController.aiDashboard);
+
+router.get("/:id/addresses", authMiddleware, studentController.addressList);
+router.get("/:id/marks", authMiddleware, studentController.ListMarks);
+router.post(
+  "/:id/marks",
+  authMiddleware,
+  validate(CreateMarksSchema),
+  studentController.CreateMarks
+);
+router.get(
+  "/:id/performances",
+  authMiddleware,
+  studentController.PerformanceData
+);
+router.get("/:id/goals", authMiddleware, studentController.GoalList);
+router.get("/:id/volunteers", authMiddleware, studentController.VolunteerList);
+// router.put("/:id", authMiddleware, isAdmin, studentController.studentUpdate);
+// router.delete("/:id", authMiddleware, isAdmin, studentController.studentDelete);
 
 module.exports = router;

@@ -4,4 +4,5 @@ module.exports = {
     .permissionController,
   groupController: require("./authorization.controller").groupController,
   tenantUserController: require("./tenantUser.controller"),
+  schoolController: require("./school.controller"),
 };

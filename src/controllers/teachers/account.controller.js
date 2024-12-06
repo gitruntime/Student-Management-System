@@ -5,6 +5,7 @@ const {
   Experience,
   Certificate,
   Education,
+  Document,
 } = require("../../models/index");
 
 const { tryCatch, calculateTotalPages } = require("../../utils/handlers");
@@ -60,11 +61,7 @@ const TeacherUpdate = tryCatch(async (req, res, next) => {
 });
 
 const AddressList = tryCatch(async (req, res) => {
-  const { page = 1, size: limit = 10 } = req.query;
-  const offset = (page - 1) * limit;
-  const { rows: data, count } = await Address.findAndCountAll({
-    page,
-    offset,
+  const data = await Address.findAll({
     where: { accountId: req.user.id, tenantId: req.tenant.id },
     attributes: {
       exclude: ["deletedAt", "tenantId", "accountId"],
@@ -72,10 +69,6 @@ const AddressList = tryCatch(async (req, res) => {
   });
   return res.status(200).json({
     data,
-    total: count,
-    currentPage: page,
-    totalPages: calculateTotalPages(count, limit),
-    size: limit,
     message: "Address Fetched Successfully",
   });
 });
@@ -408,11 +401,30 @@ const EducationDelete = tryCatch(async (req, res) => {
   return res.status(200).json({ message: "Education Deleted Successfully.!" });
 });
 
-const MedicalRecordList = tryCatch(async (req, res) => {});
-const MedicalRecordCreate = tryCatch(async (req, res) => {});
-const MedicalRecordView = tryCatch(async (req, res) => {});
-const MedicalRecordUpdate = tryCatch(async (req, res) => {});
-const MedicalRecordDelete = tryCatch(async (req, res) => {});
+const DocumentList = tryCatch(async (req, res) => {
+  const data = await Document.findAll({
+    where: {
+      accountId: req.user.id,
+      tenantId: req.tenant.id,
+    },
+  });
+  return res
+    .status(200)
+    .json({ message: "Documents fetched successfully.!", data });
+});
+const DocumentCreate = tryCatch(async (req, res) => {
+  const data = await Document.create({
+    ...req.validatedData,
+    tenantId: req.tenant.id,
+    accountId: req.user.id,
+  });
+
+  return res
+    .status(200)
+    .json({ message: "Document created successfully.!", data });
+});
+const DocumentUpdate = tryCatch(async (req, res) => {});
+const DocumentDelete = tryCatch(async (req, res) => {});
 
 module.exports = {
   TeacherView,
@@ -437,4 +449,4 @@ module.exports = {
   EducationView,
   EducationUpdate,
   EducationDelete,
-};  
+};

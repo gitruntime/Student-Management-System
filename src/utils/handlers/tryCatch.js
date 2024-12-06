@@ -10,6 +10,7 @@ const logger = require("../../../logger");
  */
 const tryCatch = (fn) => (req, res, next) => {
   Promise.resolve(fn(req, res, next)).catch((error) => {
+    console.log(error);
     logger.error(error);
     next(error);
   });

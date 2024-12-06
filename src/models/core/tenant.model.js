@@ -32,7 +32,7 @@ Tenant.init(
         // we can implement welcome mail in future with website link.
       },
     },
-  },
+  }
 );
 
 module.exports = {

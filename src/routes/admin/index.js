@@ -10,12 +10,16 @@ const studentRouter = require("./student.route");
 const classRouter = require("./class.route");
 const subjectRouter = require("./subject.route");
 const parentRouter = require("./parent.route");
+const examRouter = require("./exam.route");
+const accountRouter = require("./account.route");
 
 // router.use("/permissions", permissionRouter);
 router.use("/teachers", teacherRouter);
 router.use("/students", studentRouter);
-router.use("/class", classRouter);
+router.use("/classes", classRouter);
 router.use("/subjects", subjectRouter);
 router.use("/parents", parentRouter);
+router.use("/exams", examRouter);
+router.use("/account", accountRouter);
 
 module.exports = router;

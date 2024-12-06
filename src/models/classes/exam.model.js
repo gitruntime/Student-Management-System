@@ -2,9 +2,14 @@ const { DataTypes, Model } = require("sequelize");
 const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 
-class Exam extends Model {}
+class Exam extends Model {
+  async updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+    await this.save();
+  }
+}
 
-Exam.init(
+Exam.init(  
   {
     id: {
       type: DataTypes.INTEGER,
@@ -23,21 +28,16 @@ Exam.init(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    date: {
-      type: DataTypes.STRING,
+    startDate: {
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
-    examType: {
-      type: DataTypes.ENUM,
-      values: [
-        "First Sem",
-        "Second Sem",
-        "Third Sem",
-        "Fourth Sem",
-        "Fifth Sem",
-        "Sixth Sem",
-        "Unit Test",
-      ],
+    endDate: {
+      type: DataTypes.DATEONLY,
+    },
+    isPublished: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   {
@@ -47,7 +47,7 @@ Exam.init(
     underscored: true,
     paranoid: true,
     timestamps: true,
-  },
+  }
 );
 
 module.exports = {

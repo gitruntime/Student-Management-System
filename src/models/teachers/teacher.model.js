@@ -30,6 +30,14 @@ Teacher.init(
     bloodGroup: {
       type: DataTypes.STRING,
     },
+    profilePicture: {
+      type: DataTypes.STRING,
+      validate: {
+        isUrl: {
+          msg: "Profile picture must be a valid URL",
+        },
+      },
+    },
   },
   {
     sequelize,

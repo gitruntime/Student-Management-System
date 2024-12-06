@@ -9,13 +9,12 @@ const { subjectSchema } = require("../../utils/validators/admin");
 
 router.get("/", authMiddleware, isAdmin, classController.subjectList);
 router.post(
-  "/",
+  "/", 
   authMiddleware,
   isAdmin,
   validate(subjectSchema),
   classController.subjectCreate,
 );
-router.get("/:id", authMiddleware, isAdmin, classController.subjectView);
 router.put(
   "/:id",
   authMiddleware,

@@ -27,7 +27,7 @@ Account.init(
     tenantId: {
       type: DataTypes.INTEGER,
       references: {
-        model: "Tenant",
+        model: Tenant,
         key: "id",
       },
     },
@@ -64,7 +64,7 @@ Account.init(
     },
     userRole: {
       type: DataTypes.ENUM,
-      values: ["student", "teacher", "admin", "parent", "normal"],
+      values: ["student", "teacher", "admin", "parent", "normal", "superadmin"],
       defaultValue: "normal",
       allowNull: false,
     },
@@ -184,6 +184,8 @@ Account.init(
         }
       },
       afterCreate: async (user, options) => {
+        console.log(user);
+        const { transaction } = options;
         switch (user.userRole) {
           case "teacher":
             await Teacher.create({
@@ -192,10 +194,13 @@ Account.init(
             });
             break;
           case "admin":
-            await Admin.create({
-              accountId: user.id,
-              tenantId: user.tenantId,
-            });
+            await Admin.create(
+              {
+                accountId: user.id,
+                tenantId: user.tenantId,
+              },
+              { transaction }
+            );
             break;
           case "parent":
             await Parent.create({

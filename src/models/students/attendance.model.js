@@ -3,8 +3,9 @@ const { db: sequelize } = require("../../configs/db.config");
 const { Tenant } = require("../core");
 
 class Attendance extends Model {
-  updateFormData(validatedData) {
+  async updateFormData(validatedData) {
     Object.assign(this, validatedData);
+    await this.save()
   }
 }
 
@@ -23,13 +24,20 @@ Attendance.init(
       },
       field: "tenant_id",
     },
-    date: {
-      type: DataTypes.STRING,
+    attendanceDate: {
+      type: DataTypes.DATEONLY,
       allowNull: false,
     },
     status: {
       type: DataTypes.ENUM,
       values: ["present", "absent", "excused", "late"],
+      allowNull: false,
+    },
+    checkIn: {
+      type: DataTypes.TIME,
+    },
+    checkOut: {
+      type: DataTypes.TIME,
     },
   },
   {
@@ -39,7 +47,7 @@ Attendance.init(
     underscored: true,
     timestamps: true,
     paranoid: true,
-  },
+  }
 );
 
 module.exports = {

@@ -6,6 +6,8 @@ const tenantMiddleware = async (req, res, next) => {
   const tenant = await Tenant.findOne({
     where: { subdomainPrefix: subdomain },
   });
+  console.log(tenant);
+  
   if (!tenant)
     return res.status(401).json({
       message: "You dont have this Platform access kindly Contact to the admin",

@@ -7,6 +7,7 @@ const helmet = require("helmet");
 const swaggerSpec = require("./src/configs/swagger.config");
 const authRouter = require("./src/routes/accounts/authentication.route");
 const adminRouter = require("./src/routes/admin/index");
+const v2adminRouter = require("./src/routes/admin/v2/index");
 const teacherRouter = require("./src/routes/teachers/index");
 const StudentRouter = require("./src/routes/students/index");
 const nodeAdmin = require("./src/routes/superadmin/index");
@@ -40,10 +41,17 @@ app.use(parseIntMiddleware);
 app.use("/api/auth", authRouter);
 app.use(tenantMiddleware);
 // Middleware to extract subdomain
+
 app.use("/api/admin", adminRouter);
 app.use("/api/node-admin", nodeAdmin);
 app.use("/api/teacher", teacherRouter);
 app.use("/api/student", StudentRouter);
+
+app.use("/api/v2/admin", v2adminRouter);
+// app.use("/api/v2/superadmin", nodeAdmin);
+// app.use("/api/v2/teacher", teacherRouter);
+// app.use("/api/v2/student", StudentRouter);
+
 app.post("/api/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });

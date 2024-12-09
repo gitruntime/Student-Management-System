@@ -1,13 +1,14 @@
 const { Tenant } = require("../models");
 
 const tenantMiddleware = async (req, res, next) => {
-  const host = req.headers.host;
-  const subdomain = host.split(".")[0];
+  const subdomain = req.headers["x-tenant-domain"];
+  if (!subdomain)
+    return res.status(404).json({ message: "Subdomain not found" });
+
   const tenant = await Tenant.findOne({
     where: { subdomainPrefix: subdomain },
   });
-  console.log(tenant);
-  
+
   if (!tenant)
     return res.status(401).json({
       message: "You dont have this Platform access kindly Contact to the admin",

@@ -9,10 +9,12 @@ const {
   ClassTeacher,
 } = require("../../../models");
 const { calculateTotalPages } = require("../../../utils/handlers");
+const { Op } = require("sequelize");
 
+// Developed
 const teacherList = tryCatch(async (req, res) => {
   const {
-    size: limit = 10,
+    size: limit = 100,
     page = 1,
     sortBy = "id",
     sortOrder = "ASC",
@@ -24,14 +26,19 @@ const teacherList = tryCatch(async (req, res) => {
     include: {
       model: Teacher,
       as: "teacherProfile",
-      attributes: ["bio", "bloodGroup", "accountId"],
-      include: [
-        {
-          model: ClassTeacher,
-        },
-      ],
+      attributes: ["bio", "bloodGroup", "profilePicture"],
     },
-    attributes: ["id", "fullName", "createdAt", "firstName", "lastName"],
+    attributes: [
+      "id",
+      "fullName",
+      "createdAt",
+      "firstName",
+      "lastName",
+      "username",
+      "email",
+      "phoneNumber",
+      "dateOfBirth",
+    ],
     order: [[sortBy, sortOrder]],
   });
   return res.status(200).json({
@@ -44,87 +51,62 @@ const teacherList = tryCatch(async (req, res) => {
   });
 });
 
+// Developed
 const teacherCreate = tryCatch(async (req, res) => {
+  const isEmailExist = await Account.findOne({
+    where: { email: req.validatedData.email, tenantId: req.tenant.id },
+  });
+  if (isEmailExist) {
+    return res.status(400).json({
+      message: "Email already exist",
+      error: { email: "Email already exist" },
+    });
+  }
   const data = await Account.create({
     ...req.validatedData,
     tenantId: req.tenant.id,
+    userRole: "teacher",
   });
   return res.status(201).json({
     message: "Teacher created successfully",
-    data: {
-      id: data.id,
-      firstName: data.firstName,
-      lastName: data.lastName || "",
-      email: data.email,
-      fullName: data.fullName,
-    },
+    version: 2,
+    data,
   });
 });
 
-const teacherView = tryCatch(async (req, res) => {
-  const { id } = req.params;
-  const data = await Account.findOne({
-    where: {
-      id,
-      userRole: "teacher",
-      tenantId: req.tenant.id,
-    },
-    include: [
-      {
-        model: Teacher,
-        as: "teacherProfile",
-        attributes: ["bio", "bloodGroup"],
-      },
-    ],
-    attributes: {
-      exclude: [
-        "password",
-        "isSuperuser",
-        "deletedAt",
-        "isAdmin",
-        "tenantId",
-        "userRole",
-      ],
-    },
-  });
-  if (!data) return res.status(404).json({ message: "Teacher not found" });
-  return res
-    .status(200)
-    .json({ data, message: "Teacher fetched Successfully.!!" });
-});
-
+// Developed
 const teacherUpdate = tryCatch(async (req, res, next) => {
   const { id } = req.params;
+  // const isEmailExist = await Account.findOne({
+  //   where: { email: req.validatedData.email },
+  //   id: {
+  //     [Op.ne]: id,
+  //   },
+  // });
+  // if (isEmailExist)
+  //   return res.status(400).json({
+  //     message: "Email already exist",
+  //     error: { email: "email is already exist" },
+  //   });
   const data = await Account.findOne({
     where: {
       id,
       userRole: "teacher",
       tenantId: req.tenant.id,
     },
-    include: [
-      {
-        model: Teacher,
-        as: "teacherProfile",
-        attributes: ["id", "bio", "bloodGroup"],
-      },
-    ],
     attributes: {
       exclude: ["password", "isSuperuser", "deletedAt", "isAdmin", "tenantId"],
     },
   });
   if (!data) return res.status(404).json({ message: "Teacher not found" });
-  const { bio, bloodGroup, ...accountDetails } = req.validatedData;
-  data.updateFormData(accountDetails);
+  data.updateFormData(req.validatedData);
   await data.save();
-  if (data.teacherProfile) {
-    await data.teacherProfile.updateFormData({ bio, bloodGroup });
-    await data.teacherProfile.save();
-  }
   return res
     .status(200)
     .json({ message: "Teacher data updated successfully", data });
 });
 
+// Developed
 const teacherDelete = tryCatch(async (req, res, next) => {
   const { id } = req.params;
   const data = await Account.findOne({
@@ -138,7 +120,6 @@ const teacherDelete = tryCatch(async (req, res, next) => {
 const experienceList = tryCatch(async (req, res, next) => {
   const { size: limit = 10, page = 1 } = req.query;
   const { teacherId } = req.params;
-  console.log(teacherId, "this is");
 
   const teacher = await Teacher.findOne({
     where: { accountId: teacherId, tenantId: req.tenant.id },
@@ -491,7 +472,7 @@ const DocumentList = tryCatch(async (req, res) => {
 module.exports = {
   teacherList,
   teacherCreate,
-  teacherView,
+  // teacherView,
   teacherUpdate,
   teacherDelete,
   experienceList,

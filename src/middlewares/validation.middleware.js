@@ -15,7 +15,8 @@ const structuredError = (errors) => {
 
 const validate = (schema) => (req, res, next) => {
   const { error, value } = schema.validate(req.body, { abortEarly: false });
-
+  console.log(req.body,"body...............................");
+  
   if (error) {
     return new Response(
       {

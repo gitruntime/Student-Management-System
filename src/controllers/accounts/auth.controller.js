@@ -4,7 +4,7 @@ const {
   verifyRefreshToken,
 } = require("../../utils/signings/auth.signing");
 const { tryCatch } = require("../../utils/handlers/tryCatch");
-const { Account } = require("../../models");
+const { Account, Tenant } = require("../../models");
 
 const login = tryCatch(async (req, res) => {
   const { email, password } = req.validatedData;
@@ -22,8 +22,8 @@ const login = tryCatch(async (req, res) => {
       "password",
     ],
   });
-  console.log(user,"thousi");
-  
+  console.log(user, "thousi");
+
   if (!user)
     return res
       .status(404)
@@ -71,9 +71,21 @@ const refresh = tryCatch(async (req, res) => {
   }
 });
 
+const checkDomain = tryCatch(async (req, res, next) => {
+  const { domain } = req.query;
+  console.log(domain, "llllllllllllllllllllllllllllllllllllllll");
+
+  const data = await Tenant.findOne({
+    subdomainPrefix: domain,
+  });
+  if (!data) return res.status(404).json({ message: "Tenant not found" });
+  return res.status(200).json({ message: "Successfull" });
+});
+
 const forgetPassword = tryCatch(async (req, res) => {});
 
 module.exports = {
   login,
   refresh,
+  checkDomain,
 };

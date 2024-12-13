@@ -19,8 +19,6 @@ const { Response } = require("./response");
  * @returns response with message and status code
  */
 const errorHandler = (error, req, res, next) => {
-  console.log(error, "nokkaneyyyyyyyyyyyyyyyyyyyyyy");
-
   let statusCode;
   let responseMessage;
   switch (true) {

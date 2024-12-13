@@ -184,38 +184,45 @@ Account.init(
         }
       },
       afterCreate: async (user, options) => {
-        console.log(user);
         const { transaction } = options;
-        switch (user.userRole) {
-          case "teacher":
-            await Teacher.create({
-              accountId: user.id,
-              tenantId: user.tenantId,
-            });
-            break;
-          case "admin":
-            await Admin.create(
-              {
+        if (!options?.version) {
+          switch (user.userRole) {
+            case "teacher":
+              await Teacher.create(
+                {
+                  accountId: user.id,
+                  tenantId: user.tenantId,
+                },
+                { transaction }
+              );
+              break;
+            case "admin":
+              await Admin.create(
+                {
+                  accountId: user.id,
+                  tenantId: user.tenantId,
+                },
+                { transaction }
+              );
+              break;
+            case "parent":
+              await Parent.create({
                 accountId: user.id,
                 tenantId: user.tenantId,
-              },
-              { transaction }
-            );
-            break;
-          case "parent":
-            await Parent.create({
-              accountId: user.id,
-              tenantId: user.tenantId,
-            });
-            break;
-          case "student":
-            await Student.create({
-              accountId: user.id,
-              tenantId: user.tenantId,
-            });
-            break;
-          default:
-            break;
+              });
+              break;
+            case "student":
+              await Student.create(
+                {
+                  accountId: user.id,
+                  tenantId: user.tenantId,
+                },
+                { transaction }
+              );
+              break;
+            default:
+              break;
+          }
         }
       },
     },

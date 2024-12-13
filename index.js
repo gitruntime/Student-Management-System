@@ -23,6 +23,7 @@ const path = require("path");
 const { tenantMiddleware, parseIntMiddleware } = require("./src/middlewares");
 const { errorHandler, urlNotFound } = require("./src/utils/handlers");
 const { upload } = require("./src/configs/multer.config");
+const { checkDomain } = require("./src/controllers/accounts/auth.controller");
 
 // Helmet Middleware Configuration
 // app.get((req, res, next) => {
@@ -38,8 +39,9 @@ app.use("/api/docs/teacher", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/docs/student", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api/docs/parent", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(parseIntMiddleware);
-app.use("/api/auth", authRouter);
+app.get("/check-domain", checkDomain);
 app.use(tenantMiddleware);
+app.use("/api/auth", authRouter);
 // Middleware to extract subdomain
 
 app.use("/api/admin", adminRouter);
@@ -62,6 +64,7 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
     fileUrl,
   });
 });
+
 app.post("/api/uploads", upload.array("files"), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "No files uploaded" });

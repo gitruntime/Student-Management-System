@@ -3,17 +3,21 @@ const express = require("express");
  * Controls Teacher related routes
  */
 const router = express.Router();
-const { studentController } = require("../../controllers/teachers");
-const { authMiddleware, validate } = require("../../middlewares");
+// const {
+//   studentPOSTSchema,
+//   AttendancePOSTSchema,
+// } = require("../../utils/validators/teacher/student.validator");
+// const { attendanceSchema } = require("../../utils/validators/common.validator");
+// const AdminValidator = require("../../utils/validators/admin");
+const { studentController } = require("../../../controllers/teachers/v2");
+const { authMiddleware, validate } = require("../../../middlewares");
 const {
   studentPOSTSchema,
-  AttendancePOSTSchema,
-} = require("../../utils/validators/teacher/student.validator");
-const { attendanceSchema } = require("../../utils/validators/common.validator");
-const AdminValidator = require("../../utils/validators/admin");
-const {
-  CreateMarksSchema,
-} = require("../../utils/validators/admin/student.validator");
+  attendancePOSTSchema,
+} = require("../../../utils/validators/v2/admin/student.validator");
+// const {
+//   CreateMarksSchema,
+// } = require("../../utils/validators/admin/student.validator");
 
 router.get("/", authMiddleware, studentController.StudentList);
 // router.post(
@@ -22,7 +26,7 @@ router.get("/", authMiddleware, studentController.StudentList);
 //   validate(studentPOSTSchema),
 //   studentController.StudentCreate
 // );
-// router.get("/:id", authMiddleware, studentController.StudentView);
+router.get("/:id", authMiddleware, studentController.StudentView);
 router.put(
   "/:id",
   authMiddleware,
@@ -31,7 +35,7 @@ router.put(
 );
 // router.delete("/:id", authMiddleware, studentController.StudentDelete);
 
-router.get("/:id/interests", authMiddleware, studentController.InterestList);
+// router.get("/:id/interests", authMiddleware, studentController.InterestList);
 router.get(
   "/:id/attendances",
   authMiddleware,
@@ -40,20 +44,20 @@ router.get(
 router.post(
   "/:id/attendances",
   authMiddleware,
-  validate(AdminValidator.AttendancesSchema),
+  validate(attendancePOSTSchema),
   studentController.attendanceCreate
 );
-router.put(
-  "/:studentId/attendances/:id",
-  authMiddleware,
-  validate(AdminValidator.AttendancesSchema),
-  studentController.attendanceUpdate
-);
-router.delete(
-  "/:studentId/attendances/:id",
-  authMiddleware,
-  studentController.attendanceDelete
-);
+// router.put(
+//   "/:studentId/attendances/:id",
+//   authMiddleware,
+//   validate(AdminValidator.AttendancesSchema),
+//   studentController.attendanceUpdate
+// );
+// router.delete(
+//   "/:studentId/attendances/:id",
+//   authMiddleware,
+//   studentController.attendanceDelete
+// );
 
 // router.get("/:id/ai", authMiddleware, studentController.aiDashboard);
 
@@ -70,7 +74,7 @@ router.delete(
 //   authMiddleware,
 //   studentController.PerformanceData
 // );
-router.get("/:id/goals", authMiddleware, studentController.GoalList);
+// router.get("/:id/goals", authMiddleware, studentController.GoalList);
 // router.get("/:id/volunteers", authMiddleware, studentController.VolunteerList);
 // router.put("/:id", authMiddleware, isAdmin, studentController.studentUpdate);
 // router.delete("/:id", authMiddleware, isAdmin, studentController.studentDelete);

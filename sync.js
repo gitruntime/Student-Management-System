@@ -31,7 +31,7 @@ const generateUniqueEmail = () => {
     // await db.authenticate();
     // await db.drop({ cascade: true });
     // await Tenant.sync({ force: true });
-    // await Account.sync({ force: true });
+    // await Account.sync({ alter: true });
     // await Volunteer.sync({ alter: true });
     // await ExamSubject.sync({ alter: true });
     // await Account.sync({ alter: true });

@@ -20,19 +20,18 @@ const login = tryCatch(async (req, res) => {
       "tenantId",
       "isSuperuser",
       "password",
+      "hasProfile",
     ],
   });
-  console.log(user, "thousi");
-
   if (!user)
     return res
       .status(404)
-      .json({ errors: { email: "User with this email is not present" } });
+      .json({ error: { email: "User with this email is not present" } });
   const isMatch = await user.comparePassword(password);
   if (!isMatch)
     return res
       .status(400)
-      .json({ errors: { password: "Password is not Correct" } });
+      .json({ error: { password: "Password is not Correct" } });
 
   let userData = user.get({ plain: true });
 
@@ -73,10 +72,9 @@ const refresh = tryCatch(async (req, res) => {
 
 const checkDomain = tryCatch(async (req, res, next) => {
   const { domain } = req.query;
-  console.log(domain, "llllllllllllllllllllllllllllllllllllllll");
 
   const data = await Tenant.findOne({
-    subdomainPrefix: domain,
+    where: { subdomainPrefix: domain },
   });
   if (!data) return res.status(404).json({ message: "Tenant not found" });
   return res.status(200).json({ message: "Successfull" });

@@ -2,14 +2,18 @@ const { db: sequelize } = require("../../configs/db.config");
 const { DataTypes, Model } = require("sequelize");
 const { Tenant } = require("../core");
 
-class Admin extends Model {}
+class Admin extends Model {
+  updateFormData(validatedData) {
+    Object.assign(this, validatedData);
+  }
+}
 
 Admin.init(
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement:true
+      autoIncrement: true,
     },
     tenantId: {
       type: DataTypes.INTEGER,
@@ -27,7 +31,7 @@ Admin.init(
     timestamps: true,
     paranoid: true,
     underscored: true,
-  },
+  }
 );
 
 module.exports = {

@@ -10,7 +10,6 @@ const { tryCatch } = require("../../../utils/handlers/tryCatch");
 
 const examList = tryCatch(async (req, res, next) => {
   const { studentId } = req.query;
-  // I know this is very useless thing but we dont have documentation, no UI, no workflow, cause of that my brain is twisted, change it later
   const whereCondition = {
     tenantId: req.tenant.id,
   };

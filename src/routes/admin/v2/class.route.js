@@ -19,6 +19,7 @@ router.post(
   validate(classPOSTSchema),
   classController.classCreate
 );
+router.get("/:id", authMiddleware, isAdmin, classController.classView);
 router.put(
   "/:id",
   authMiddleware,

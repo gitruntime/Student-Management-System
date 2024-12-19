@@ -19,6 +19,7 @@ const { Response } = require("./response");
  * @returns response with message and status code
  */
 const errorHandler = (error, req, res, next) => {
+  console.dir(error);
   let statusCode;
   let responseMessage;
   switch (true) {

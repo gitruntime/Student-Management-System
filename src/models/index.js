@@ -197,6 +197,15 @@ Account.hasOne(Parent, {
 });
 Parent.belongsTo(Account, { foreignKey: "accountId", as: "accounts" });
 
+Parent.hasMany(Student, {
+  foreignKey: "parentId",
+  as: "students",
+});
+Student.belongsTo(Parent, {
+  foreignKey: "parentId",
+  as: "studentProfile",
+});
+
 // Class ------------------------------------------------------------------->
 class ClassSubject extends Model {}
 

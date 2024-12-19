@@ -19,6 +19,7 @@ router.post(
   validate(studentPOSTSchema),
   studentController.studentCreate
 );
+router.get("/:id", authMiddleware, isAdmin, studentController.StudentView);
 router.put(
   "/:id",
   authMiddleware,

@@ -74,6 +74,33 @@ const teacherCreate = tryCatch(async (req, res) => {
   });
 });
 
+const teacherView = tryCatch(async (req, res) => {
+  const data = await Account.findOne({
+    where: { userRole: "teacher", tenantId: req.tenant.id },
+    include: {
+      model: Teacher,
+      as: "teacherProfile",
+      attributes: ["bio", "bloodGroup", "profilePicture"],
+    },
+    attributes: [
+      "id",
+      "fullName",
+      "createdAt",
+      "firstName",
+      "lastName",
+      "username",
+      "email",
+      "phoneNumber",
+      "dateOfBirth",
+    ],
+  });
+  return res.status(200).json({
+    data,
+    message: "Teacher data fetched Successfully",
+    version: "v2",
+  });
+});
+
 // Developed
 const teacherUpdate = tryCatch(async (req, res, next) => {
   const { id } = req.params;
@@ -472,7 +499,7 @@ const DocumentList = tryCatch(async (req, res) => {
 module.exports = {
   teacherList,
   teacherCreate,
-  // teacherView,
+  teacherView,
   teacherUpdate,
   teacherDelete,
   experienceList,

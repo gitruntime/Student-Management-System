@@ -4,12 +4,12 @@ const express = require("express");
  */
 const router = express.Router();
 
-const accountRouter = require("./account.routes");
-const studentRouter = require("./student.route");
-const classRoute = require("./class.route");
+const accountRouter = require("./v2/account.routes");
+const studentRouter = require("./v2/student.route");
+const classRoute = require("./v2/class.route");
 
-router.use("/", accountRouter);
+// router.use("/", accountRouter);
 router.use("/students", studentRouter);
-router.use("/classes", classRoute);
+// router.use("/classes", classRoute);
 
 module.exports = router;

@@ -1,16 +1,12 @@
 const {
+  Teacher,
+  ClassTeacher,
   Account,
   Student,
-  Attendance,
-  ClassTeacher,
-  Teacher,
   Class,
-  Address,
-} = require("../../models");
-const { Interest } = require("../../models/core");
-const { Volunteer, Goal } = require("../../models/students/academic.model");
-
-const { tryCatch, calculateTotalPages } = require("../../utils/handlers");
+  Attendance,
+} = require("../../../models");
+const { tryCatch, calculateTotalPages } = require("../../../utils/handlers");
 
 const StudentList = tryCatch(async (req, res, next) => {
   const { page = 1, size: limit = 10 } = req.query;
@@ -25,10 +21,7 @@ const StudentList = tryCatch(async (req, res, next) => {
     attributes: ["classId", "teacherId"],
   });
 
-  console.log(classIdInstance, "classIdInstance");
-
   const classIds = classIdInstance.map((item) => item.classId);
-  console.log(classIds, "classIds");
 
   const { count, rows: data } = await Account.findAndCountAll({
     page,
@@ -66,16 +59,7 @@ const StudentList = tryCatch(async (req, res, next) => {
     size: limit,
   });
 });
-const StudentCreate = tryCatch(async (req, res, next) => {
-  const data = await Account.create({
-    ...req.validatedData,
-    userRole: "student",
-    tenantId: req.tenant.id,
-  });
-  return res
-    .status(201)
-    .json({ message: "Student created successfully", data });
-});
+
 const StudentView = tryCatch(async (req, res, next) => {
   const { id } = req.params;
   const data = await Account.findOne({
@@ -98,6 +82,13 @@ const StudentView = tryCatch(async (req, res, next) => {
             "updatedAt",
           ],
         },
+        include: [
+          {
+            model: Class,
+            as: "classDetails",
+            attributes: ["name", "section"],
+          },
+        ],
       },
     ],
     attributes: [
@@ -113,11 +104,15 @@ const StudentView = tryCatch(async (req, res, next) => {
       "updatedAt",
     ],
   });
-  if (!data) return res.status(404).json({ message: "Student not found" });
+  if (!data)
+    return res
+      .status(404)
+      .json({ message: "Student not found", version: "v2" });
   return res
     .status(200)
-    .json({ message: "Student Fetched Successfully.", data });
+    .json({ message: "Student Fetched Successfully.", data, version: "v2" });
 });
+
 const StudentUpdate = tryCatch(async (req, res, next) => {
   const { id } = req.params;
   const data = await Account.findOne({
@@ -133,49 +128,51 @@ const StudentUpdate = tryCatch(async (req, res, next) => {
     ],
   });
   if (!data) return res.status(404).json({ message: "Student not found" });
-  const { bloodGroup, bio, profilePicture, ...rest } = req.validatedData;
+  const { bloodGroup, bio, ...rest } = req.validatedData;
   data.updateFormData(rest);
   await data.save();
-  data.studentProfile.updateFormData({ bloodGroup, bio, profilePicture });
-  return res
-    .status(200)
-    .json({ message: "Student data updated successfully", data });
-});
-
-const StudentDelete = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const student = await Account.findOne({
-    where: { id, userRole: "student", tenantId: req.tenant.id },
-  });
-  if (!student) return res.status(404).json({ message: "Student not found" });
-  await student.destroy();
-  return res.status(200).json({ message: "Student deleted successfully" });
-});
-
-const addressList = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-    attributes: ["accountId"],
-  });
-  const data = await Address.findAll({
-    where: { accountId: student.accountId, tenantId: req.tenant.id },
-    attributes: [
-      "id",
-      "city",
-      "state",
-      "pincode",
-      "streetAddress",
-      "country",
-      "phoneNumber",
-      "addressType",
-    ],
-  });
+  data.studentProfile.updateFormData({ bloodGroup, bio });
   return res.status(200).json({
+    message: "Student data updated successfully",
     data,
-    message: "Address Fetched Successfully",
+    version: "v2",
   });
 });
+
+// const StudentDelete = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const student = await Account.findOne({
+//     where: { id, userRole: "student", tenantId: req.tenant.id },
+//   });
+//   if (!student) return res.status(404).json({ message: "Student not found" });
+//   await student.destroy();
+//   return res.status(200).json({ message: "Student deleted successfully" });
+// });
+
+// const addressList = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const student = await Student.findOne({
+//     where: { accountId: id, tenantId: req.tenant.id },
+//     attributes: ["accountId"],
+//   });
+//   const data = await Address.findAll({
+//     where: { accountId: student.accountId, tenantId: req.tenant.id },
+//     attributes: [
+//       "id",
+//       "city",
+//       "state",
+//       "pincode",
+//       "streetAddress",
+//       "country",
+//       "phoneNumber",
+//       "addressType",
+//     ],
+//   });
+//   return res.status(200).json({
+//     data,
+//     message: "Address Fetched Successfully",
+//   });
+// });
 
 const attendanceList = tryCatch(async (req, res, next) => {
   const { id } = req.params;
@@ -185,12 +182,7 @@ const attendanceList = tryCatch(async (req, res, next) => {
   });
   if (!student)
     return res.status(404).json({ message: "Requested student not found.!" });
-  const {
-    page = 1,
-    size: limit = 100,
-    startDate = new Date("2024-01-01"),
-    endDate = new Date("2025-01-01"),
-  } = req.query;
+  const { page = 1, size: limit = 100 } = req.query;
   const offset = (page - 1) * limit;
   const { rows: data, count } = await Attendance.findAndCountAll({
     page,
@@ -198,10 +190,6 @@ const attendanceList = tryCatch(async (req, res, next) => {
     where: {
       studentId: student.id,
       tenantId: req.tenant.id,
-      attendanceDate: {
-        [Op.gte]: startDate,
-        [Op.lte]: endDate,
-      },
     },
     attributes: [
       "id",
@@ -209,10 +197,10 @@ const attendanceList = tryCatch(async (req, res, next) => {
       "status",
       "checkIn",
       "checkOut",
-      [Sequelize.fn("COUNT", Sequelize.col("status")), "count"],
+      // [Sequelize.fn("COUNT", Sequelize.col("status")), "count"],
       "status",
     ],
-    group: ["status", "attendanceDate", "checkIn", "checkOut", "id"],
+    // group: ["status", "attendanceDate", "checkIn", "checkOut", "id"],
   });
 
   const attendanceData = {
@@ -235,6 +223,7 @@ const attendanceList = tryCatch(async (req, res, next) => {
   });
 
   return res.status(200).json({
+    version: "v2",
     data,
     total: count,
     currentPage: page,
@@ -263,244 +252,244 @@ const attendanceCreate = tryCatch(async (req, res, next) => {
     .json({ data, message: "Attendance Created Successfully" });
 });
 
-const attendanceUpdate = tryCatch(async (req, res, next) => {
-  const { id, studentId } = req.params;
-  const student = await Student.findOne({
-    where: { accountId: studentId, tenantId: req.tenant.id },
-    attributes: ["id", "accountId"],
-  });
-  if (!student)
-    return res.status(404).json({ message: "Requested student not found.!" });
-  const data = await Attendance.findOne({
-    where: { id, tenantId: req.tenant.id, studentId: student.id },
-    attributes: ["id", "attendanceDate", "status"],
-  });
-  if (!data)
-    return res.status(404).json({ message: "Attendance not Found.!!" });
-  data.updateFormData(req.validatedData);
-  return res
-    .status(200)
-    .json({ data, message: "Attendance Updated Successfully.!!" });
-});
+// const attendanceUpdate = tryCatch(async (req, res, next) => {
+//   const { id, studentId } = req.params;
+//   const student = await Student.findOne({
+//     where: { accountId: studentId, tenantId: req.tenant.id },
+//     attributes: ["id", "accountId"],
+//   });
+//   if (!student)
+//     return res.status(404).json({ message: "Requested student not found.!" });
+//   const data = await Attendance.findOne({
+//     where: { id, tenantId: req.tenant.id, studentId: student.id },
+//     attributes: ["id", "attendanceDate", "status"],
+//   });
+//   if (!data)
+//     return res.status(404).json({ message: "Attendance not Found.!!" });
+//   data.updateFormData(req.validatedData);
+//   return res
+//     .status(200)
+//     .json({ data, message: "Attendance Updated Successfully.!!" });
+// });
 
-const attendanceDelete = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await Attendance.findOne({
-    where: { id, tenantId: req.tenant.id },
-    attributes: ["id", "date", "status"],
-  });
-  if (!data)
-    return res.status(404).json({ message: "Attendance not Found.!!" });
-  await data.destroy();
-  return res
-    .status(200)
-    .json({ data, message: "Attendance Deleted Successfully.!!" });
-});
+// const attendanceDelete = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const data = await Attendance.findOne({
+//     where: { id, tenantId: req.tenant.id },
+//     attributes: ["id", "date", "status"],
+//   });
+//   if (!data)
+//     return res.status(404).json({ message: "Attendance not Found.!!" });
+//   await data.destroy();
+//   return res
+//     .status(200)
+//     .json({ data, message: "Attendance Deleted Successfully.!!" });
+// });
 
-const interestList = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const student = await Student.findOne({
-    where: { id: studentId, tenantId: req.tenant.id },
-    include: [
-      {
-        model: Interest,
-        through: { attributes: [] },
-      },
-    ],
-  });
-  if (!student) return res.status(404).json({ message: "Student not Found.!" });
-  const interests = student.Interests;
-  return res.status(200).json({
-    message: "Interests fetched successfully.",
-    data: interests,
-  });
-});
+// const interestList = tryCatch(async (req, res, next) => {
+//   const { studentId } = req.params;
+//   const student = await Student.findOne({
+//     where: { id: studentId, tenantId: req.tenant.id },
+//     include: [
+//       {
+//         model: Interest,
+//         through: { attributes: [] },
+//       },
+//     ],
+//   });
+//   if (!student) return res.status(404).json({ message: "Student not Found.!" });
+//   const interests = student.Interests;
+//   return res.status(200).json({
+//     message: "Interests fetched successfully.",
+//     data: interests,
+//   });
+// });
 
-const interestAdd = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const student = await Student.findOne({
-    where: { id, tenantId: req.tenant.id, studentId },
-  });
-  if (!student) return res.status(404).json({ message: "Student Not Found.!" });
-  const interests = await Promise.all(
-    req.validatedData.interests.map(async (name) => {
-      const [interest, created] = await Interest.findOrCreate({
-        where: { name: name },
-      });
-      return interest;
-    })
-  );
-  const interestIds = interests.map((interest) => interest.id);
-  await student.addInterest(interestIds);
-  return res
-    .status(201)
-    .json({ message: "Interest Added Successfully", data: interests });
-});
+// const interestAdd = tryCatch(async (req, res, next) => {
+//   const { studentId } = req.params;
+//   const student = await Student.findOne({
+//     where: { id, tenantId: req.tenant.id, studentId },
+//   });
+//   if (!student) return res.status(404).json({ message: "Student Not Found.!" });
+//   const interests = await Promise.all(
+//     req.validatedData.interests.map(async (name) => {
+//       const [interest, created] = await Interest.findOrCreate({
+//         where: { name: name },
+//       });
+//       return interest;
+//     })
+//   );
+//   const interestIds = interests.map((interest) => interest.id);
+//   await student.addInterest(interestIds);
+//   return res
+//     .status(201)
+//     .json({ message: "Interest Added Successfully", data: interests });
+// });
 
-const interestRemove = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const { interestIds } = req.body;
+// const interestRemove = tryCatch(async (req, res, next) => {
+//   const { studentId } = req.params;
+//   const { interestIds } = req.body;
 
-  const student = await Student.findOne({
-    where: { id: studentId, tenantId: req.tenant.id },
-  });
+//   const student = await Student.findOne({
+//     where: { id: studentId, tenantId: req.tenant.id },
+//   });
 
-  if (!student) {
-    return res.status(404).json({ message: "Student not Found." });
-  }
+//   if (!student) {
+//     return res.status(404).json({ message: "Student not Found." });
+//   }
 
-  const interests = await Interest.findAll({
-    where: {
-      id: interestIds,
-    },
-  });
+//   const interests = await Interest.findAll({
+//     where: {
+//       id: interestIds,
+//     },
+//   });
 
-  if (!interests)
-    return res
-      .status(404)
-      .json({ message: "No interests found with the provided IDs." });
+//   if (!interests)
+//     return res
+//       .status(404)
+//       .json({ message: "No interests found with the provided IDs." });
 
-  await student.removeInterests(interests);
+//   await student.removeInterests(interests);
 
-  return res.status(200).json({
-    message: "Interests removed successfully.",
-    data: interests,
-  });
-});
+//   return res.status(200).json({
+//     message: "Interests removed successfully.",
+//     data: interests,
+//   });
+// });
 
-const medicalRecordList = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const { page = 1, size = 10 } = req.query;
-  const offset = (page - 1) * size;
-  const { rows: data, count } = await MedicalRecord.findAndCountAll({
-    page,
-    offset,
-    where: { studentId, tenantId: req.tenant.id },
-    attributes: {
-      exclude: ["deletedAt"],
-    },
-  });
-  return res.status(200).json({
-    data,
-    total: count,
-    currentPage: page,
-    totalPages: calculateTotalPages(count, limit),
-    size: size,
-    message: "Medical Record Fetched Successfully",
-  });
-});
+// const medicalRecordList = tryCatch(async (req, res, next) => {
+//   const { studentId } = req.params;
+//   const { page = 1, size = 10 } = req.query;
+//   const offset = (page - 1) * size;
+//   const { rows: data, count } = await MedicalRecord.findAndCountAll({
+//     page,
+//     offset,
+//     where: { studentId, tenantId: req.tenant.id },
+//     attributes: {
+//       exclude: ["deletedAt"],
+//     },
+//   });
+//   return res.status(200).json({
+//     data,
+//     total: count,
+//     currentPage: page,
+//     totalPages: calculateTotalPages(count, limit),
+//     size: size,
+//     message: "Medical Record Fetched Successfully",
+//   });
+// });
 
-const medicalRecordCreate = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const data = await MedicalRecord.create({
-    studentId,
-    tenantId: req.tenant.id,
-    ...req.validatedData,
-  });
-  return res
-    .status(201)
-    .json({ message: "Medical Record Created Successfully.!", data });
-});
+// const medicalRecordCreate = tryCatch(async (req, res, next) => {
+//   const { studentId } = req.params;
+//   const data = await MedicalRecord.create({
+//     studentId,
+//     tenantId: req.tenant.id,
+//     ...req.validatedData,
+//   });
+//   return res
+//     .status(201)
+//     .json({ message: "Medical Record Created Successfully.!", data });
+// });
 
-const medicalRecordView = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await MedicalRecord.findOne({
-    where: { id, tenantId: req.tenant.id },
-  });
-  if (!data)
-    return res.status(404).json({ message: "Medical Record not Found.!" });
-  return res
-    .status(200)
-    .json({ data, message: "Medical Record Fetched Successfully.!!" });
-});
+// const medicalRecordView = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const data = await MedicalRecord.findOne({
+//     where: { id, tenantId: req.tenant.id },
+//   });
+//   if (!data)
+//     return res.status(404).json({ message: "Medical Record not Found.!" });
+//   return res
+//     .status(200)
+//     .json({ data, message: "Medical Record Fetched Successfully.!!" });
+// });
 
-const medicalRecordUpdate = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await MedicalRecord.findOne({
-    where: { id, tenantId: req.tenant.id },
-  });
-  if (!data)
-    return res.status(404).json({ message: "Medical Record not Found" });
-  data.updateFormData(req.validatedData);
-  await data.save();
-  return res
-    .status(200)
-    .json({ message: "Medical Record Fetched Successfully.!!", data });
-});
+// const medicalRecordUpdate = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const data = await MedicalRecord.findOne({
+//     where: { id, tenantId: req.tenant.id },
+//   });
+//   if (!data)
+//     return res.status(404).json({ message: "Medical Record not Found" });
+//   data.updateFormData(req.validatedData);
+//   await data.save();
+//   return res
+//     .status(200)
+//     .json({ message: "Medical Record Fetched Successfully.!!", data });
+// });
 
-const medicalRecordDelete = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await MedicalRecord.findOne({
-    where: { id, tenantId: req.tenant.id },
-  });
-  if (!data)
-    return res
-      .status(404)
-      .json({ data, message: "Medical Record not Found.!" });
-  await data.destroy();
-  return res
-    .status(200)
-    .json({ message: "Medical Record Deleted Successfully.!!" });
-});
+// const medicalRecordDelete = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const data = await MedicalRecord.findOne({
+//     where: { id, tenantId: req.tenant.id },
+//   });
+//   if (!data)
+//     return res
+//       .status(404)
+//       .json({ data, message: "Medical Record not Found.!" });
+//   await data.destroy();
+//   return res
+//     .status(200)
+//     .json({ message: "Medical Record Deleted Successfully.!!" });
+// });
 
-const AwardList = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const { page = 1, size = 10 } = req.query;
-  const offset = (page - 1) * size;
-  const { rows: data, count } = await Award.findAndCountAll({
-    page,
-    offset,
-    where: { studentId, tenantId: req.tenant.id },
-    attributes: {
-      exclude: ["deletedAt"],
-    },
-  });
-  return res.status(200).json({
-    data,
-    total: count,
-    currentPage: page,
-    totalPages: calculateTotalPages(count, limit),
-    size: size,
-    message: "Medical Record Fetched Successfully",
-  });
-});
+// const AwardList = tryCatch(async (req, res, next) => {
+//   const { studentId } = req.params;
+//   const { page = 1, size = 10 } = req.query;
+//   const offset = (page - 1) * size;
+//   const { rows: data, count } = await Award.findAndCountAll({
+//     page,
+//     offset,
+//     where: { studentId, tenantId: req.tenant.id },
+//     attributes: {
+//       exclude: ["deletedAt"],
+//     },
+//   });
+//   return res.status(200).json({
+//     data,
+//     total: count,
+//     currentPage: page,
+//     totalPages: calculateTotalPages(count, limit),
+//     size: size,
+//     message: "Medical Record Fetched Successfully",
+//   });
+// });
 
-const AwardCreate = tryCatch(async (req, res, next) => {
-  const { studentId } = req.params;
-  const data = await Award.create({
-    tenantId: req.tenant.id,
-    studentId,
-    ...req.validatedData,
-  });
-  return res.status(201).json({
-    data,
-    message: "Award created successfully",
-  });
-});
-const AwardView = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await Award.findOne({ where: { id, tenantId: req.tenant.id } });
-  if (!data) return res.status(404).json({ message: "Award not found" });
-  return res.status(200).json({ data, message: "Award fetched successfully" });
-});
+// const AwardCreate = tryCatch(async (req, res, next) => {
+//   const { studentId } = req.params;
+//   const data = await Award.create({
+//     tenantId: req.tenant.id,
+//     studentId,
+//     ...req.validatedData,
+//   });
+//   return res.status(201).json({
+//     data,
+//     message: "Award created successfully",
+//   });
+// });
+// const AwardView = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const data = await Award.findOne({ where: { id, tenantId: req.tenant.id } });
+//   if (!data) return res.status(404).json({ message: "Award not found" });
+//   return res.status(200).json({ data, message: "Award fetched successfully" });
+// });
 
-const AwardUpdate = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await Award.findOne({ where: { id, tenantId: req.tenant.id } });
-  if (!data) return res.status(404).json({ message: "Award not found" });
-  data.updateFormData(req.validatedData);
-  await data.save();
-  return res
-    .status(200)
-    .json({ data, message: "Award Updated Successfully.!!" });
-});
-const AwardDelete = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const data = await Award.findOne({ where: { id, tenantId: req.tenant.id } });
-  if (!data) return res.status(404).json({ message: "Award not found" });
-  await data.destroy();
-  return res.status(200).json({ message: "Award Deleted Successfully.!!" });
-});
+// const AwardUpdate = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const data = await Award.findOne({ where: { id, tenantId: req.tenant.id } });
+//   if (!data) return res.status(404).json({ message: "Award not found" });
+//   data.updateFormData(req.validatedData);
+//   await data.save();
+//   return res
+//     .status(200)
+//     .json({ data, message: "Award Updated Successfully.!!" });
+// });
+// const AwardDelete = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const data = await Award.findOne({ where: { id, tenantId: req.tenant.id } });
+//   if (!data) return res.status(404).json({ message: "Award not found" });
+//   await data.destroy();
+//   return res.status(200).json({ message: "Award Deleted Successfully.!!" });
+// });
 
 const extractReason = (data) => {
   const regex = new RegExp(
@@ -846,131 +835,126 @@ const aiDashboard = tryCatch(async (req, res, next) => {
   return res.status(200).json(responseData);
 });
 
-const ListMarks = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-  });
-  console.log(student);
+// const ListMarks = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const student = await Student.findOne({
+//     where: { accountId: id, tenantId: req.tenant.id },
+//   });
+//   console.log(student);
 
-  if (!student)
-    return res.status(404).json({ message: "Requested student not found" });
-  const data = await StudentExamScore.findAll({
-    where: { studentId: student.id },
-    include: [
-      {
-        model: ExamSubject,
-        as: "examSubjects",
-        include: [
-          {
-            model: Exam,
-            as: "exam",
-          },
-          {
-            model: Subject,
-          },
-        ],
-      },
-    ],
-  });
-  return res.status(200).json({ message: "Marks fetched Successfully", data });
-});
+//   if (!student)
+//     return res.status(404).json({ message: "Requested student not found" });
+//   const data = await StudentExamScore.findAll({
+//     where: { studentId: student.id },
+//     include: [
+//       {
+//         model: ExamSubject,
+//         as: "examSubjects",
+//         include: [
+//           {
+//             model: Exam,
+//             as: "exam",
+//           },
+//           {
+//             model: Subject,
+//           },
+//         ],
+//       },
+//     ],
+//   });
+//   return res.status(200).json({ message: "Marks fetched Successfully", data });
+// });
 
-const CreateMarks = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-  });
-  if (!student)
-    return res.status(404).json({ message: "Requested student not found" });
+// const CreateMarks = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const student = await Student.findOne({
+//     where: { accountId: id, tenantId: req.tenant.id },
+//   });
+//   if (!student)
+//     return res.status(404).json({ message: "Requested student not found" });
 
-  const data = await StudentExamScore.create({
-    ...req.validatedData,
-    studentId: student.id,
-    tenantId: req.tenant.id,
-  });
+//   const data = await StudentExamScore.create({
+//     ...req.validatedData,
+//     studentId: student.id,
+//     tenantId: req.tenant.id,
+//   });
 
-  return res.status(201).json({ message: "Mark created successfully.", data });
-});
+//   return res.status(201).json({ message: "Mark created successfully.", data });
+// });
 
-const UpdateMarks = tryCatch(async (req, res, next) => {
-  const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-  });
-  if (!student)
-    return res.status(404).json({ message: "Requested student not found" });
+// const UpdateMarks = tryCatch(async (req, res, next) => {
+//   const student = await Student.findOne({
+//     where: { accountId: id, tenantId: req.tenant.id },
+//   });
+//   if (!student)
+//     return res.status(404).json({ message: "Requested student not found" });
 
-  const data = await StudentExamScore.findOne;
+//   const data = await StudentExamScore.findOne;
 
-  return res.status(201).json({ message: "Mark created successfully.", data });
-});
+//   return res.status(201).json({ message: "Mark created successfully.", data });
+// });
 
-const InterestList = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const user = await Account.findOne({
-    where: { id, tenantId: req.tenant.id },
-    include: [
-      {
-        model: Interest,
-        through: { attributes: [] },
-      },
-    ],
-  });
+// const InterestList = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   const user = await Account.findOne({
+//     where: { id, tenantId: req.tenant.id },
+//     include: [
+//       {
+//         model: Interest,
+//         through: { attributes: [] },
+//       },
+//     ],
+//   });
 
-  if (!user) return res.status(404).json({ message: "User not found" });
+//   if (!user) return res.status(404).json({ message: "User not found" });
 
-  return res
-    .status(200)
-    .json({ message: "Interest fetched successfully", data: user.Interests });
-});
+//   return res
+//     .status(200)
+//     .json({ message: "Interest fetched successfully", data: user.Interests });
+// });
 
-const GoalList = tryCatch(async (req, res) => {
-  const { id } = req.params;
-  const user = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-    attributes: [],
-    include: [
-      {
-        model: Goal,
-        as: "goals",
-        attributes: ["id", "name", "description", "type"],
-      },
-    ],
-  });
+// const GoalList = tryCatch(async (req, res) => {
+//   const { id } = req.params;
+//   const user = await Student.findOne({
+//     where: { accountId: id, tenantId: req.tenant.id },
+//     attributes: [],
+//     include: [
+//       {
+//         model: Goal,
+//         as: "goals",
+//         attributes: ["id", "name", "description", "type"],
+//       },
+//     ],
+//   });
 
-  if (!user) return res.status(404).json({ message: "User not found" });
+//   if (!user) return res.status(404).json({ message: "User not found" });
 
-  return res
-    .status(200)
-    .json({ message: "Goals fetched successfully", data: user.goals });
-});
+//   return res
+//     .status(200)
+//     .json({ message: "Goals fetched successfully", data: user.goals });
+// });
 
-const VolunteerList = tryCatch(async (req, res) => {
-  const { id } = req.params;
-  const user = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-    attributes: [],
-    include: [
-      {
-        model: Volunteer,
-        as: "volunteerings",
-        attributes: ["id", "organisationName", "role", "duration"],
-      },
-    ],
-  });
+// const VolunteerList = tryCatch(async (req, res) => {
+//   const { id } = req.params;
+//   const user = await Student.findOne({
+//     where: { accountId: id, tenantId: req.tenant.id },
+//     attributes: [],
+//     include: [
+//       {
+//         model: Volunteer,
+//         as: "volunteerings",
+//         attributes: ["id", "organisationName", "role", "duration"],
+//       },
+//     ],
+//   });
 
-  if (!user) return res.status(404).json({ message: "User not found" });
+//   if (!user) return res.status(404).json({ message: "User not found" });
 
-  return res.status(200).json({
-    message: "Volunteers fetched successfully",
-    data: user.volunteerings,
-  });
-});
-
-const ListAward = tryCatch(async (req, res, next) => {});
-const CreateAward = tryCatch(async (req, res, next) => {});
-const UpdateAward = tryCatch(async (req, res, next) => {});
-const DeleteAward = tryCatch(async (req, res, next) => {});
+//   return res.status(200).json({
+//     message: "Volunteers fetched successfully",
+//     data: user.volunteerings,
+//   });
+// });
 
 const getAttendanceCountByMonth = (data) => {
   // Initialize attendance count for all months with 0
@@ -1013,177 +997,177 @@ const getAttendanceCountByMonth = (data) => {
   return result;
 };
 
-const PerformanceData = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  console.log(id);
+// const PerformanceData = tryCatch(async (req, res, next) => {
+//   const { id } = req.params;
+//   console.log(id);
 
-  const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-    include: [
-      {
-        model: Attendance,
-        as: "attendances",
-        attributes: ["id", "attendanceDate", "status", "checkIn", "checkOut"],
-      },
-    ],
-  });
-  if (!student) {
-    return res.status(200).json({ message: "Student not found" });
-  }
-  // const performanceData = await StudentExamScore.findAll({
-  //   where: { studentId: student.id },
-  //   include: [
-  //     {
-  //       model: ExamSubject,
-  //       as: "examSubjects",
-  //       attributes: ["subjectId"],
-  //     },
-  //   ],
-  //   attributes: [
-  //     "studentId",
-  //     [sequelize.fn("SUM", sequelize.col("marks_obtained")), "totalMarks"],
-  //     [sequelize.fn("COUNT", sequelize.col("exam_subject_id")), "examCount"],
-  //   ],
-  //   group: [
-  //     "student_id",
-  //     "exam_subject_id",
-  //     "examSubjects.id",
-  //     "examSubjects.subject_id",
-  //   ],
-  // });
-  const exams = await Exam.findAll({
-    attributes: ["id", "startDate"],
-    include: [
-      {
-        model: ExamSubject,
-        as: "examSubjects",
-        include: [
-          {
-            model: Subject,
-            attributes: ["name"],
-          },
-          {
-            model: StudentExamScore,
-            as: "examScores",
-            where: { studentId: student.id },
-            attributes: ["marksObtained"],
-          },
-        ],
-      },
-    ],
-  });
+//   const student = await Student.findOne({
+//     where: { accountId: id, tenantId: req.tenant.id },
+//     include: [
+//       {
+//         model: Attendance,
+//         as: "attendances",
+//         attributes: ["id", "attendanceDate", "status", "checkIn", "checkOut"],
+//       },
+//     ],
+//   });
+//   if (!student) {
+//     return res.status(200).json({ message: "Student not found" });
+//   }
+//   // const performanceData = await StudentExamScore.findAll({
+//   //   where: { studentId: student.id },
+//   //   include: [
+//   //     {
+//   //       model: ExamSubject,
+//   //       as: "examSubjects",
+//   //       attributes: ["subjectId"],
+//   //     },
+//   //   ],
+//   //   attributes: [
+//   //     "studentId",
+//   //     [sequelize.fn("SUM", sequelize.col("marks_obtained")), "totalMarks"],
+//   //     [sequelize.fn("COUNT", sequelize.col("exam_subject_id")), "examCount"],
+//   //   ],
+//   //   group: [
+//   //     "student_id",
+//   //     "exam_subject_id",
+//   //     "examSubjects.id",
+//   //     "examSubjects.subject_id",
+//   //   ],
+//   // });
+//   const exams = await Exam.findAll({
+//     attributes: ["id", "startDate"],
+//     include: [
+//       {
+//         model: ExamSubject,
+//         as: "examSubjects",
+//         include: [
+//           {
+//             model: Subject,
+//             attributes: ["name"],
+//           },
+//           {
+//             model: StudentExamScore,
+//             as: "examScores",
+//             where: { studentId: student.id },
+//             attributes: ["marksObtained"],
+//           },
+//         ],
+//       },
+//     ],
+//   });
 
-  const performanceData = {};
+//   const performanceData = {};
 
-  exams.forEach((exam) => {
-    const month = new Date(exam.startDate).toLocaleString("default", {
-      month: "short",
-    });
+//   exams.forEach((exam) => {
+//     const month = new Date(exam.startDate).toLocaleString("default", {
+//       month: "short",
+//     });
 
-    if (!performanceData[month]) {
-      performanceData[month] = {};
-    }
+//     if (!performanceData[month]) {
+//       performanceData[month] = {};
+//     }
 
-    exam.examSubjects.forEach((examSubject) => {
-      const subjectName = examSubject.Subject.name;
+//     exam.examSubjects.forEach((examSubject) => {
+//       const subjectName = examSubject.Subject.name;
 
-      if (!performanceData[month][subjectName]) {
-        performanceData[month][subjectName] = { totalMarks: 0, count: 0 };
-      }
+//       if (!performanceData[month][subjectName]) {
+//         performanceData[month][subjectName] = { totalMarks: 0, count: 0 };
+//       }
 
-      examSubject.examScores.forEach((score) => {
-        performanceData[month][subjectName].totalMarks += parseFloat(
-          score.marksObtained
-        );
-        performanceData[month][subjectName].count += 1;
-      });
-    });
-  });
+//       examSubject.examScores.forEach((score) => {
+//         performanceData[month][subjectName].totalMarks += parseFloat(
+//           score.marksObtained
+//         );
+//         performanceData[month][subjectName].count += 1;
+//       });
+//     });
+//   });
 
-  const ScorePerformance = Object.entries(performanceData).map(
-    ([month, subjects]) => {
-      const entry = { month };
-      for (const [subject, { totalMarks, count }] of Object.entries(subjects)) {
-        entry[subject] = (totalMarks / count).toFixed(2);
-      }
-      return entry;
-    }
-  );
+//   const ScorePerformance = Object.entries(performanceData).map(
+//     ([month, subjects]) => {
+//       const entry = { month };
+//       for (const [subject, { totalMarks, count }] of Object.entries(subjects)) {
+//         entry[subject] = (totalMarks / count).toFixed(2);
+//       }
+//       return entry;
+//     }
+//   );
 
-  const calendarMonths = [
-    "Jan",
-    "Feb",
-    "Mar",
-    "Apr",
-    "May",
-    "Jun",
-    "Jul",
-    "Aug",
-    "Sep",
-    "Oct",
-    "Nov",
-    "Dec",
-  ];
+//   const calendarMonths = [
+//     "Jan",
+//     "Feb",
+//     "Mar",
+//     "Apr",
+//     "May",
+//     "Jun",
+//     "Jul",
+//     "Aug",
+//     "Sep",
+//     "Oct",
+//     "Nov",
+//     "Dec",
+//   ];
 
-  const subjects = [
-    ...new Set(
-      ScorePerformance.flatMap((item) =>
-        Object.keys(item).filter((key) => key !== "month")
-      )
-    ),
-  ];
+//   const subjects = [
+//     ...new Set(
+//       ScorePerformance.flatMap((item) =>
+//         Object.keys(item).filter((key) => key !== "month")
+//       )
+//     ),
+//   ];
 
-  const ScorePerformanceStructuredData = calendarMonths.map((month) => {
-    const monthData = { month };
-    subjects.forEach((subject) => {
-      const dataForMonth = ScorePerformance.find(
-        (item) => item.month === month
-      );
-      monthData[subject] =
-        dataForMonth && dataForMonth[subject] !== undefined
-          ? Number(dataForMonth[subject])
-          : 0;
-    });
+//   const ScorePerformanceStructuredData = calendarMonths.map((month) => {
+//     const monthData = { month };
+//     subjects.forEach((subject) => {
+//       const dataForMonth = ScorePerformance.find(
+//         (item) => item.month === month
+//       );
+//       monthData[subject] =
+//         dataForMonth && dataForMonth[subject] !== undefined
+//           ? Number(dataForMonth[subject])
+//           : 0;
+//     });
 
-    return monthData;
-  });
+//     return monthData;
+//   });
 
-  return res.status(200).json({
-    message: "Performance fetched Successfully",
-    marks: ScorePerformanceStructuredData,
-    attendances: getAttendanceCountByMonth(student.attendances),
-  });
-});
+//   return res.status(200).json({
+//     message: "Performance fetched Successfully",
+//     marks: ScorePerformanceStructuredData,
+//     attendances: getAttendanceCountByMonth(student.attendances),
+//   });
+// });
 
 module.exports = {
   StudentList,
-  StudentCreate,
+  // StudentCreate,
   StudentView,
   StudentUpdate,
-  StudentDelete,
-  interestList,
-  interestAdd,
-  interestRemove,
+  // StudentDelete,
+  // interestList,
+  // interestAdd,
+  // interestRemove,
   attendanceList,
   attendanceCreate,
-  addressList,
-  attendanceUpdate,
-  attendanceDelete,
-  medicalRecordList,
-  medicalRecordCreate,
-  medicalRecordView,
-  medicalRecordUpdate,
-  medicalRecordDelete,
-  AwardList,
-  AwardCreate,
-  AwardView,
-  AwardUpdate,
-  AwardDelete,
-  aiDashboard,
-  ListMarks,
-  CreateMarks,
-  InterestList,
-  PerformanceData,
-  GoalList,
-  VolunteerList,
+  // addressList,
+  // attendanceUpdate,
+  // attendanceDelete,
+  // medicalRecordList,
+  // medicalRecordCreate,
+  // medicalRecordView,
+  // medicalRecordUpdate,
+  // medicalRecordDelete,
+  // AwardList,
+  // AwardCreate,
+  // AwardView,
+  // AwardUpdate,
+  // AwardDelete,
+  // aiDashboard,
+  // ListMarks,
+  // CreateMarks,
+  // InterestList,
+  // PerformanceData,
+  // GoalList,
+  // VolunteerList,
 };

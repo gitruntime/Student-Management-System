@@ -4,6 +4,7 @@ const {
   Attendance,
   StudentExamScore,
   ExamSubject,
+  Admin,
 } = require("../../../models");
 const { Event, Subject } = require("../../../models/classes");
 const { tryCatch } = require("../../../utils/handlers");
@@ -213,6 +214,61 @@ const Dashboard = tryCatch(async (req, res, next) => {
   });
 });
 
+const OnboardProfile = tryCatch(async (req, res, next) => {
+  const { profilePicture, ...accountDetails } = req.validatedData;
+  const account = await Account.findOne({
+    where: {
+      id: req.user.id,
+      userRole: "admin",
+    },
+    include: [
+      {
+        model: Admin,
+        as: "adminProfile",
+      },
+    ],
+  });
+  account.updateFormData({ ...accountDetails, hasProfile: true });
+  account.save();
+  account.adminProfile.updateFormData(profilePicture);
+  account.adminProfile.save();
+  return res
+    .status(200)
+    .json({ message: "Profile setup successfully completed", account });
+});
+
+const Profile = tryCatch(async (req, res, next) => {
+  const data = await Account.findOne({
+    where: {
+      id: req.user.id,
+      userRole: "admin",
+    },
+    include: [
+      {
+        model: Admin,
+        as: "adminProfile",
+        attributes: ["accountId"],
+      },
+    ],
+    attributes: {
+      exclude: [
+        "password",
+        "isSuperuser",
+        "isActive",
+        "deletedAt",
+        "hasProfile",
+        "tenantId",
+        "isAdmin",
+      ],
+    },
+  });
+  return res
+    .status(200)
+    .json({ message: "Profile fetched Successfully", data });
+});
+
 module.exports = {
   Dashboard,
+  OnboardProfile,
+  Profile,
 };

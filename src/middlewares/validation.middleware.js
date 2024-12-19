@@ -1,31 +1,18 @@
 const { Response } = require("../utils/handlers");
 
-const structuredError = (errors) => {
-  const mappedError = {};
-  errors.forEach((error) => {
-    const key = error.path.join(".");
-    if (mappedError[key]) {
-      mappedError[key].push(error.message);
-    } else {
-      mappedError[key] = [error.message];
-    }
-  });
-  return mappedError;
-};
-
 const validate = (schema) => (req, res, next) => {
-  const { error, value } = schema.validate(req.body, { abortEarly: false });
-  console.log(req.body,"body...............................");
-  
+  const { error, value } = schema.validate(req.body, { abortEarly: true });
   if (error) {
-    return new Response(
-      {
-        message: "Validation Error",
-        details: structuredError(error.details),
-      },
-      400,
-      res,
-    );
+    const errorDetails = error.details[0];
+    const validationError = {
+      [errorDetails.path.join(".")]: errorDetails.message,
+    };
+
+    // Respond with a 400 status and validation error details
+    return res.status(400).json({
+      message: "Validation Error",
+      error: validationError,
+    });
   }
   req.validatedData = value;
   next();

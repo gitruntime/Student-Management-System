@@ -39,6 +39,34 @@ const studentList = tryCatch(async (req, res, next) => {
     include: {
       model: Student,
       as: "studentProfile",
+      attributes: ["accountId"],
+      include: [
+        {
+          model: Class,
+          as: "classDetails",
+          attributes: ["id", "name", "section"],
+        },
+      ],
+    },
+    attributes: ["id", "fullName", "firstName", "lastName", "email"],
+  });
+  return res.status(200).json({
+    data,
+    totalRecords: count,
+    totalPages: calculateTotalPages(count, limit),
+    currentPage: page,
+    size: limit,
+    version: "v2",
+  });
+});
+
+const StudentView = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const data = await Account.findOne({
+    where: { userRole: "student", tenantId: req.tenant.id, id },
+    include: {
+      model: Student,
+      as: "studentProfile",
       attributes: ["profilePicture", "bio", "bloodGroup"],
       include: [
         {
@@ -60,13 +88,11 @@ const studentList = tryCatch(async (req, res, next) => {
       "createdAt",
     ],
   });
+  if (!data) return res.status(404).json({ message: "Student not found" });
   return res.status(200).json({
     data,
-    totalRecords: count,
-    totalPages: calculateTotalPages(count, limit),
-    currentPage: page,
-    size: limit,
     version: "v2",
+    message: "Student fetched Successfully",
   });
 });
 
@@ -91,7 +117,6 @@ const studentCreate = async (req, res, next) => {
     const student = await Account.create(
       {
         ...accountDetails,
-        password: "Password@123",
         userRole: "student",
         tenantId: req.tenant.id,
       },
@@ -1130,6 +1155,7 @@ module.exports = {
   attendanceUpdate,
   attendanceDelete,
   aiAnalytics,
+  StudentView,
   // addressList,
   // ListMarks,
   // CreateMarks,

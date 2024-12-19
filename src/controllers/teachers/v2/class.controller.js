@@ -5,9 +5,9 @@ const {
   Subject,
   Exam,
   ExamSubject,
-} = require("../../models");
-const { Assignment } = require("../../models/classes/class.model");
-const { tryCatch, calculateTotalPages } = require("../../utils/handlers");
+} = require("../../../models");
+const { Assignment } = require("../../../models/classes/class.model");
+const { tryCatch, calculateTotalPages } = require("../../../utils/handlers");
 
 const classList = tryCatch(async (req, res) => {
   const teacher = await Teacher.findOne({

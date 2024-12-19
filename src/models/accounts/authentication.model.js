@@ -59,6 +59,10 @@ Account.init(
         },
       },
     },
+    hasProfile: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
     phoneNumber: {
       type: DataTypes.STRING,
     },

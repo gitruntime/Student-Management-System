@@ -53,6 +53,56 @@ const classList = tryCatch(async (req, res, next) => {
         "teacherCount",
       ],
     ],
+    group: ["Class.id"],
+    order: [[sortBy, sortOrder]],
+  });
+  const count = await Class.count({
+    where: { tenantId: req.tenant.id },
+  });
+  return res.status(200).json({
+    data,
+    totalCount: count,
+    currentPage: page,
+    totalPages: calculateTotalPages(count, limit),
+    size: limit,
+    version: 2,
+    message: "Class data fetched Successfully",
+  });
+});
+
+const classView = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const data = await Class.findOne({
+    where: { tenantId: req.tenant.id, id },
+    attributes: [
+      "id",
+      "name",
+      "section",
+      [
+        sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM classes_subjects AS cs
+            WHERE cs.class_id = "Class".id
+        )`),
+        "subjectCount",
+      ],
+      [
+        sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM students AS s
+            WHERE s.class_id = "Class".id AND s.deleted_at IS NULL
+        )`),
+        "studentCount",
+      ],
+      [
+        sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM classes_teachers AS ct
+            WHERE ct.class_id = "Class".id
+        )`),
+        "teacherCount",
+      ],
+    ],
     include: [
       {
         model: Student,
@@ -68,18 +118,10 @@ const classList = tryCatch(async (req, res, next) => {
         },
       },
     ],
-    group: ["Class.id"],
-    order: [[sortBy, sortOrder]],
-  });
-  const count = await Class.count({
-    where: { tenantId: req.tenant.id },
+    group: ["Class.id", "Subjects.id"],
   });
   return res.status(200).json({
     data,
-    totalCount: count,
-    currentPage: page,
-    totalPages: calculateTotalPages(count, limit),
-    size: limit,
     version: 2,
     message: "Class data fetched Successfully",
   });
@@ -330,6 +372,7 @@ const getTeachersFromClass = tryCatch(async (req, res, next) => {
       firstName: teacher.Teacher.accountDetails.firstName,
       lastName: teacher.Teacher.accountDetails.lastName,
       email: teacher.Teacher.accountDetails.email,
+      fullName: teacher.Teacher.accountDetails.fullName,
       phoneNumber: teacher.Teacher.accountDetails.phoneNumber,
       profilePicture:
         teacher.Teacher.accountDetails.teacherProfile.profilePicture,
@@ -500,6 +543,7 @@ const fetchClassStudents = tryCatch(async (req, res, next) => {
 module.exports = {
   classList,
   classCreate,
+  classView,
   classUpdate,
   classDelete,
   subjectList,

@@ -16,7 +16,6 @@ const port = process.env.PORT || 3000;
 const { dbConnect } = require("./src/configs/db.config");
 const cors = require("cors");
 const logger = require("./logger");
-const corsHeader = require("./src/configs/cors.config");
 const path = require("path");
 
 // Local Middleware
@@ -24,6 +23,7 @@ const { tenantMiddleware, parseIntMiddleware } = require("./src/middlewares");
 const { errorHandler, urlNotFound } = require("./src/utils/handlers");
 const { upload } = require("./src/configs/multer.config");
 const { checkDomain } = require("./src/controllers/accounts/auth.controller");
+const { corsOptions } = require("./src/configs/cors.config");
 
 // Helmet Middleware Configuration
 // app.get((req, res, next) => {
@@ -32,16 +32,19 @@ const { checkDomain } = require("./src/controllers/accounts/auth.controller");
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 app.use(helmet());
 app.use(express.json());
-app.use(cors());
-app.use("/api/docs/admin", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/docs/superadmin", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/docs/teacher", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/docs/student", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-app.use("/api/docs/parent", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
+// app.use("/api/docs/admin", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// app.use("/api/docs/superadmin", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// app.use("/api/docs/teacher", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// app.use("/api/docs/student", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// app.use("/api/docs/parent", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+app.get("/api/check-domain", checkDomain);
 app.use(parseIntMiddleware);
-app.get("/check-domain", checkDomain);
+
 app.use(tenantMiddleware);
-app.use("/api/auth", authRouter);
+app.use("/api/v2/auth", authRouter);
 // Middleware to extract subdomain
 
 app.use("/api/admin", adminRouter);
@@ -51,17 +54,21 @@ app.use("/api/student", StudentRouter);
 
 app.use("/api/v2/admin", v2adminRouter);
 // app.use("/api/v2/superadmin", nodeAdmin);
-// app.use("/api/v2/teacher", teacherRouter);
+app.use("/api/v2/teacher", teacherRouter);
 // app.use("/api/v2/student", StudentRouter);
 
 app.post("/api/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
-  const fileUrl = `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`;
+  const data = {
+    url: `${req.protocol}://${req.get("host")}/uploads/${req.file.filename}`,
+    name: req.file.filename,
+    size: req.file.size,
+  };
   res.json({
     message: "File uploaded successfully",
-    fileUrl,
+    data,
   });
 });
 

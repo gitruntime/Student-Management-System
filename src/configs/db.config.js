@@ -11,6 +11,7 @@ const db = new Sequelize(env.DATABASE_URL, {
       rejectUnauthorized: false,
     },
   },
+  dialectModule: require("pg"),
   logging: console.log,
 });
 

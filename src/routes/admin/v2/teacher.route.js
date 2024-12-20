@@ -29,12 +29,12 @@ router.put(
 router.delete("/:id", authMiddleware, isAdmin, teacherController.teacherDelete);
 
 // Experience model CRUD
-// router.get(
-//   "/:teacherId/experiences",
-//   authMiddleware,
-//   isAdmin,
-//   teacherController.experienceList
-// );
+router.get(
+  "/:teacherId/experiences",
+  authMiddleware,
+  isAdmin,
+  teacherController.experienceList
+);
 // router.post(
 //   "/:teacherId/experiences",
 //   authMiddleware,
@@ -60,12 +60,12 @@ router.delete("/:id", authMiddleware, isAdmin, teacherController.teacherDelete);
 //   teacherController.experienceDelete
 // );
 
-// router.get(
-//   "/:teacherId/educations/",
-//   authMiddleware,
-//   isAdmin,
-//   teacherController.educationList
-// );
+router.get(
+  "/:teacherId/educations/",
+  authMiddleware,
+  isAdmin,
+  teacherController.educationList
+);
 
 // router.post(
 //   "/:teacherId/educations",
@@ -96,12 +96,12 @@ router.delete("/:id", authMiddleware, isAdmin, teacherController.teacherDelete);
 // );
 
 // // Certificate model CRUD
-// router.get(
-//   "/:teacherId/certifications",
-//   authMiddleware,
-//   isAdmin,
-//   teacherController.certificateList
-// );
+router.get(
+  "/:teacherId/certificates",
+  authMiddleware,
+  isAdmin,
+  teacherController.certificateList
+);
 // router.post(
 //   "/:teacherId/certifications",
 //   authMiddleware,

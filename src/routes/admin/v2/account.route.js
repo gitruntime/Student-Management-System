@@ -6,7 +6,12 @@ const {
   onboardSchema,
 } = require("../../../utils/validators/v2/admin/account.validator");
 
-router.get("/dashboard", authMiddleware, isAdmin, accountController.Dashboard);
+router.get(
+  "/dashboard/overview",
+  authMiddleware,
+  isAdmin,
+  accountController.DashboardOverview
+);
 router.put(
   "/profile/onboard",
   authMiddleware,

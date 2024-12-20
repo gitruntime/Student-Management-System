@@ -1,8 +1,15 @@
-// const express = require("express");
-// /**
-//  * Controls Teacher related routes
-//  */
-// const router = express.Router();
+const express = require("express");
+const { authMiddleware, validate } = require("../../../middlewares");
+const { accountController } = require("../../../controllers/teachers/v2");
+const {
+  teacherProfileSchema,
+  educationSchema,
+  experienceSchema,
+} = require("../../../utils/validators/teacher/account.validator");
+/**
+ * Controls Teacher related routes
+ */
+const router = express.Router();
 // const { accountController } = require("../../controllers/teachers");
 // const { authMiddleware, validate } = require("../../middlewares");
 // const {
@@ -13,13 +20,13 @@
 //   experienceSchema,
 // } = require("../../utils/validators/teacher/account.validator");
 
-// router.get("/", authMiddleware, accountController.TeacherView);
-// router.put(
-//   "/",
-//   authMiddleware,
-//   validate(teacherProfileSchema),
-//   accountController.TeacherUpdate
-// );
+router.get("/profile", authMiddleware, accountController.TeacherView);
+router.put(
+  "/",
+  authMiddleware,
+  validate(teacherProfileSchema),
+  accountController.TeacherUpdate
+);
 // // =============================================================================>
 // // router.get("/addresses", authMiddleware, accountController.AddressList);
 // // router.post(
@@ -65,13 +72,13 @@
 //   accountController.CertificateDelete
 // );
 // // ===================================================================================>
-// router.get("/educations", authMiddleware, accountController.EducationList);
-// router.post(
-//   "/educations",
-//   authMiddleware,
-//   validate(educationSchema),
-//   accountController.EducationCreate
-// );
+router.get("/educations", authMiddleware, accountController.EducationList);
+router.post(
+  "/educations",
+  authMiddleware,
+  validate(educationSchema),
+  accountController.EducationCreate
+);
 // // router.get("/educations/:id", authMiddleware, accountController.EducationView);
 // router.put(
 //   "/educations/:id",
@@ -84,13 +91,13 @@
 //   authMiddleware,
 //   accountController.EducationDelete
 // );
-// router.get("/experiences", authMiddleware, accountController.ExperienceList);
-// router.post(
-//   "/experiences",
-//   authMiddleware,
-//   validate(experienceSchema),
-//   accountController.ExperienceCreate
-// );
+router.get("/experiences", authMiddleware, accountController.ExperienceList);
+router.post(
+  "/experiences",
+  authMiddleware,
+  validate(experienceSchema),
+  accountController.ExperienceCreate
+);
 // // router.get("/experiences/:id", authMiddleware, accountController.ExperienceView);
 // router.put(
 //   "/experiences/:id",
@@ -103,4 +110,4 @@
 //   authMiddleware,
 //   accountController.ExperienceDelete
 // );
-// module.exports = router;
+module.exports = router;

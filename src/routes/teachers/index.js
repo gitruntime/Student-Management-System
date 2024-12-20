@@ -8,7 +8,7 @@ const accountRouter = require("./v2/account.routes");
 const studentRouter = require("./v2/student.route");
 const classRoute = require("./v2/class.route");
 
-// router.use("/", accountRouter);
+router.use("/account", accountRouter);
 router.use("/students", studentRouter);
 // router.use("/classes", classRoute);
 

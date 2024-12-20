@@ -859,52 +859,51 @@ const aiAnalytics = tryCatch(async (req, res, next) => {
   return res.status(200).json(responseData);
 });
 
-// const ListMarks = tryCatch(async (req, res, next) => {
-//   const { id } = req.params;
-//   const student = await Student.findOne({
-//     where: { accountId: id, tenantId: req.tenant.id },
-//   });
-//   console.log(student);
+const ListMarks = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+  });
 
-//   if (!student)
-//     return res.status(404).json({ message: "Requested student not found" });
-//   const data = await StudentExamScore.findAll({
-//     where: { studentId: student.id },
-//     include: [
-//       {
-//         model: ExamSubject,
-//         as: "examSubjects",
-//         include: [
-//           {
-//             model: Exam,
-//             as: "exam",
-//           },
-//           {
-//             model: Subject,
-//           },
-//         ],
-//       },
-//     ],
-//   });
-//   return res.status(200).json({ message: "Marks fetched Successfully", data });
-// });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found" });
+  const data = await StudentExamScore.findAll({
+    where: { studentId: student.id },
+    include: [
+      {
+        model: ExamSubject,
+        as: "examSubjects",
+        include: [
+          {
+            model: Exam,
+            as: "exam",
+          },
+          {
+            model: Subject,
+          },
+        ],
+      },
+    ],
+  });
+  return res.status(200).json({ message: "Marks fetched Successfully", data });
+});
 
-// const CreateMarks = tryCatch(async (req, res, next) => {
-//   const { id } = req.params;
-//   const student = await Student.findOne({
-//     where: { accountId: id, tenantId: req.tenant.id },
-//   });
-//   if (!student)
-//     return res.status(404).json({ message: "Requested student not found" });
+const CreateMarks = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+  });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found" });
 
-//   const data = await StudentExamScore.create({
-//     ...req.validatedData,
-//     studentId: student.id,
-//     tenantId: req.tenant.id,
-//   });
+  const data = await StudentExamScore.create({
+    ...req.validatedData,
+    studentId: student.id,
+    tenantId: req.tenant.id,
+  });
 
-//   return res.status(201).json({ message: "Mark created successfully.", data });
-// });
+  return res.status(201).json({ message: "Mark created successfully.", data });
+});
 
 // const UpdateMarks = tryCatch(async (req, res, next) => {
 //   const student = await Student.findOne({
@@ -1157,8 +1156,8 @@ module.exports = {
   aiAnalytics,
   StudentView,
   // addressList,
-  // ListMarks,
-  // CreateMarks,
+  ListMarks,
+  CreateMarks,
   // PerformanceData,
   // GoalList,
   // VolunteerList,

@@ -9,6 +9,7 @@ const {
   attendancePOSTSchema,
 } = require("../../../utils/validators/v2/admin/student.validator");
 const { validate, authMiddleware, isAdmin } = require("../../../middlewares");
+const { CreateMarksSchema } = require("../../../utils/validators/admin/student.validator");
 
 // Account and Student model CRUD
 router.get("/", authMiddleware, isAdmin, studentController.studentList);
@@ -75,13 +76,14 @@ router.get(
 //   isAdmin,
 //   studentController.addressList
 // );
-// router.get("/:id/marks", authMiddleware, isAdmin, studentController.ListMarks);
-// router.post(
-//   "/:id/marks",
-//   authMiddleware,
-//   isAdmin,
-//   studentController.CreateMarks
-// );
+router.get("/:id/marks", authMiddleware, isAdmin, studentController.ListMarks);
+router.post(
+  "/:id/marks",
+  authMiddleware,
+  isAdmin,
+  validate(CreateMarksSchema),
+  studentController.CreateMarks
+);
 // router.get(
 //   "/:id/performances",
 //   authMiddleware,

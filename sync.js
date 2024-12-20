@@ -10,6 +10,7 @@ const {
   Subject,
   ExamSubject,
   ExamScore,
+  Education,
 } = require("./src/models");
 const { Tenant } = require("./src/models/core/tenant.model");
 const { faker } = require("@faker-js/faker");
@@ -36,7 +37,8 @@ const generateUniqueEmail = () => {
     // await ExamSubject.sync({ alter: true });
     // await Account.sync({ alter: true });
     // await Admin.sync({ alter: true });
-    await db.sync({ alter: true });
+    // await Education.sync({ alter: true });
+    // await db.sync({ alter: true });
 
     // Create Super Admin Account
     // await Account.create({

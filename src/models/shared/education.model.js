@@ -44,6 +44,9 @@ Education.init(
     description: {
       type: DataTypes.STRING,
     },
+    location: {
+      type: DataTypes.STRING,
+    },
   },
   {
     sequelize,

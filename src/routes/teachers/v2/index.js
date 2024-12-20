@@ -8,7 +8,7 @@ const accountRouter = require("./account.routes");
 const studentRouter = require("./student.route");
 const classRoute = require("./class.route");
 
-router.use("/", accountRouter);
+router.use("/account", accountRouter);
 router.use("/students", studentRouter);
 router.use("/classes", classRoute);
 

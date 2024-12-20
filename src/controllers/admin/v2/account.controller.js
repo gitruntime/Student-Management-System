@@ -30,7 +30,7 @@ const getLastMonthRange = () => {
   return [firstDayOfLastMonth, lastDayOfLastMonth];
 };
 
-const Dashboard = tryCatch(async (req, res, next) => {
+const DashboardOverview = tryCatch(async (req, res, next) => {
   const totalStudents = await Account.count({
     where: { userRole: "student", tenantId: req.tenant.id },
   });
@@ -268,7 +268,7 @@ const Profile = tryCatch(async (req, res, next) => {
 });
 
 module.exports = {
-  Dashboard,
+  DashboardOverview,
   OnboardProfile,
   Profile,
 };

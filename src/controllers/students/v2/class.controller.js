@@ -10,8 +10,9 @@ const {
   StudentExamScore,
   ExamSubject,
   Exam,
-} = require("../../models");
-const { tryCatch, calculateTotalPages } = require("../../utils/handlers");
+} = require("../../../models");
+const { tryCatch, calculateTotalPages } = require("../../../utils/handlers");
+const { Assignment } = require("../../../models/classes/class.model");
 
 const TeacherList = tryCatch(async (req, res, next) => {
   const user = await Student.findOne({
@@ -55,9 +56,11 @@ const TeacherList = tryCatch(async (req, res, next) => {
       className: classTeacher.Class ? classTeacher.Class.name : null,
     };
   });
-  return res
-    .status(200)
-    .json({ message: "Teacher fetched successfully", data: teacherData });
+  return res.status(200).json({
+    message: "Teacher fetched successfully",
+    data: teacherData,
+    version: "v2",
+  });
 });
 
 const ClassmatesList = tryCatch(async (req, res, next) => {
@@ -191,9 +194,47 @@ const MarksList = tryCatch(async (req, res, next) => {
   });
   return res.status(200).json({ message: "Marks fetched Successfully", data });
 });
+
+const ExamList = tryCatch(async (req, res, next) => {
+  const student = await Student.findOne({
+    where: {
+      accountId: req.user.id,
+      tenantId: req.tenant.id,
+    },
+  });
+  if (!student) return res.status(200).json({ message: "Student not found" });
+  const data = await Exam.findAll({
+    where: {
+      classId: student.classId,
+    },
+  });
+  return res
+    .status(200)
+    .json({ message: "Exam's fetched successfully.!", data });
+});
+
+const AssignmentList = tryCatch(async (req, res, next) => {
+  const student = await Student.findOne({
+    where: {
+      accountId: req.user.id,
+      tenantId: req.tenant.id,
+    },
+  });
+  if (!student) return res.status(200).json({ message: "Student not found" });
+  const data = await Assignment.findAll({
+    where: {
+      classId: student.classId,
+    },
+  });
+  return res
+    .status(200)
+    .json({ message: "Assignment's fetched successfully.!", data });
+});
 module.exports = {
   TeacherList,
   ClassmatesList,
   AttendanceList,
   MarksList,
+  ExamList,
+  AssignmentList,
 };

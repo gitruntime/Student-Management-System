@@ -71,7 +71,13 @@ router.get(
   authMiddleware,
   isAdmin,
   classController.getClassSubjects
-)
+);
+router.get(
+  "/:id/exams",
+  authMiddleware,
+  isAdmin,
+  classController.fetchClassExams
+);
 // router.delete(
 //   "/:classId/teachers/:id",
 //   authMiddleware,

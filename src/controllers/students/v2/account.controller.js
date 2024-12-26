@@ -9,10 +9,10 @@ const {
   ClassSubject,
   Exam,
   ExamSubject,
-} = require("../../models");
-const { Interest } = require("../../models/core");
-const { Goal, Volunteer } = require("../../models/students/academic.model");
-const { tryCatch } = require("../../utils/handlers");
+} = require("../../../models");
+const { Interest } = require("../../../models/core");
+const { Goal, Volunteer } = require("../../../models/students/academic.model");
+const { tryCatch } = require("../../../utils/handlers");
 
 const ViewProfileData = tryCatch(async (req, res, next) => {
   const data = await Account.findOne({
@@ -177,7 +177,9 @@ const GoalList = tryCatch(async (req, res, next) => {
   const data = await Goal.findAll({
     where: { studentId: user.id, tenantId: req.tenant.id },
   });
-  return res.status(200).json({ message: "Goal fetched successfully", data });
+  return res
+    .status(200)
+    .json({ message: "Goal fetched successfully", data, version: "v2" });
 });
 
 const GoalCreate = tryCatch(async (req, res, next) => {
@@ -322,7 +324,7 @@ const Dashboard = tryCatch(async (req, res, next) => {
       },
     ],
   });
-  
+
   const performanceData = {};
 
   exams.forEach((exam) => {

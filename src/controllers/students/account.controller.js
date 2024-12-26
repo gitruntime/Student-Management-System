@@ -322,7 +322,7 @@ const Dashboard = tryCatch(async (req, res, next) => {
       },
     ],
   });
-  
+
   const performanceData = {};
 
   exams.forEach((exam) => {

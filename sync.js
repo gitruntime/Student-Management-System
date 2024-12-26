@@ -16,6 +16,7 @@ const {
 const { Tenant } = require("./src/models/core/tenant.model");
 const { faker } = require("@faker-js/faker");
 const { Volunteer, Goal } = require("./src/models/students/academic.model");
+const { Assignment } = require("./src/models/classes/class.model");
 
 const generatedEmails = new Set();
 
@@ -41,6 +42,7 @@ const generateUniqueEmail = () => {
     // await Education.sync({ alter: true });
     // await db.sync({ alter: true });
     // await Experience.sync({ force: true });
+    await Assignment.sync({ alter: true });
 
     // Create Super Admin Account
     // await Account.create({

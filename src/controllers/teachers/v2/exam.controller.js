@@ -9,17 +9,6 @@ const {
 const { tryCatch } = require("../../../utils/handlers/tryCatch");
 
 const examList = tryCatch(async (req, res, next) => {
-  const { studentId } = req.query;
-  const whereCondition = {
-    tenantId: req.tenant.id,
-  };
-  if (studentId) {
-    const student = await Student.findOne({
-      where: { accountId: studentId, tenantId: req.tenant.id },
-      attributes: ["classId"],
-    });
-    whereCondition.classId = student.classId;
-  }
 
   let data = await Exam.findAll({
     where: whereCondition,

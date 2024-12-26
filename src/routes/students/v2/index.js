@@ -8,7 +8,7 @@ const AccountRouter = require("./account.route");
 const ClassRouter = require("./class.route");
 
 // router.use("/permissions", permissionRouter);
-router.use("/", AccountRouter);
-router.use("/classes", ClassRouter);
+router.use("/account", AccountRouter);
+router.use("/class", ClassRouter);
 
 module.exports = router;

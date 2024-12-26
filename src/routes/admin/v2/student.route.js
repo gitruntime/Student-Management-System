@@ -9,7 +9,9 @@ const {
   attendancePOSTSchema,
 } = require("../../../utils/validators/v2/admin/student.validator");
 const { validate, authMiddleware, isAdmin } = require("../../../middlewares");
-const { CreateMarksSchema } = require("../../../utils/validators/admin/student.validator");
+const {
+  CreateMarksSchema,
+} = require("../../../utils/validators/admin/student.validator");
 
 // Account and Student model CRUD
 router.get("/", authMiddleware, isAdmin, studentController.studentList);
@@ -29,12 +31,12 @@ router.put(
   studentController.studentUpdate
 );
 // router.delete("/:id", authMiddleware, isAdmin, studentController.studentDelete);
-// router.get(
-//   "/:id/interests",
-//   authMiddleware,
-//   isAdmin,
-//   studentController.InterestList
-// );
+router.get(
+  "/:id/interests",
+  authMiddleware,
+  isAdmin,
+  studentController.interestList
+);
 router.get(
   "/:id/attendances",
   authMiddleware,
@@ -64,10 +66,10 @@ router.delete(
 
 // !Developed not Tested
 router.get(
-  "/:id/ai/analysis",
+  "/:id/ai/overview",
   authMiddleware,
   isAdmin,
-  studentController.aiAnalytics
+  studentController.aiOverview
 );
 
 // router.get(
@@ -90,7 +92,7 @@ router.post(
 //   isAdmin,
 //   studentController.PerformanceData
 // );
-// router.get("/:id/goals", authMiddleware, isAdmin, studentController.GoalList);
+router.get("/:id/goals", authMiddleware, isAdmin, studentController.GoalList);
 // router.get(
 //   "/:id/volunteers",
 //   authMiddleware,

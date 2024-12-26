@@ -62,30 +62,29 @@ const AssignmentList = tryCatch(async (req, res, next) => {
   const offset = (page - 1) * limit;
 
   // Find the teacher instance associated with the logged-in user
-  const teacherInstance = await Teacher.findOne({
+  const teacher = await Teacher.findOne({
     where: { accountId: req.user.id },
   });
 
-  if (!teacherInstance) {
+  if (!teacher) {
     return res.status(404).json({ message: "Teacher not found" });
   }
 
   // Fetch all classes assigned to the teacher
   const classList = await ClassTeacher.findAll({
-    where: { teacherId: teacherInstance.id },
+    where: { teacherId: teacher.id },
   });
 
-  const classIds = classList.map((cls) => cls.classId); // Extract class IDs
+  const classIds = classList.map((cls) => cls.classId);
 
   const { count, rows: data } = await Assignment.findAndCountAll({
     offset,
     limit,
     where: {
       tenantId: req.tenant.id,
-      classId: classIds, // Filter by class IDs
+      classId: classIds,
     },
   });
-  // const { count, rows: data } = await Assignment.findAndCountAll();
 
   // Response
   return res.status(200).json({
@@ -98,17 +97,20 @@ const AssignmentList = tryCatch(async (req, res, next) => {
 });
 
 const AssignmentCreate = tryCatch(async (req, res, next) => {
-  const classInstance = await Class.findOne({
-    where: { id: req.validatedData.classId, tenantId: req.tenant.id },
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id },
+  });
+  if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+
+  const classInstance = await ClassTeacher.findOne({
+    where: { classId: req.validatedData.classId, teacherId: teacher.id },
   });
 
   if (!classInstance)
-    return res.status(404).json({ message: "Selected class is not found" });
-  const subjectInstance = await Subject.findOne({
-    where: { id: req.validatedData.subjectId },
-  });
-  if (!subjectInstance)
-    return res.status(404).json({ message: "Selected subject not found" });
+    return res.status(404).json({
+      message: "Validation Error",
+      error: { classId: "Class not found or not assigned to you" },
+    });
 
   const data = await Assignment.create({
     ...req.validatedData,
@@ -121,6 +123,21 @@ const AssignmentCreate = tryCatch(async (req, res, next) => {
 });
 
 const AssignmentUpdate = tryCatch(async (req, res, next) => {
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id },
+  });
+  if (!teacher) return res.status(404).json({ message: "Teacher not found" });
+
+  const classInstance = await ClassTeacher.findOne({
+    where: { classId: req.validatedData.classId, teacherId: teacher.id },
+  });
+
+  if (!classInstance)
+    return res.status(404).json({
+      message: "Validation Error",
+      error: { classId: "Class not found or not assigned to you" },
+    });
+
   const { id } = req.params;
   const data = await Assignment.findOne({
     where: {

@@ -91,7 +91,11 @@ router.post(
   validate(experienceSchema),
   accountController.ExperienceCreate
 );
-router.get("/experiences/:id", authMiddleware, accountController.ExperienceView);
+router.get(
+  "/experiences/:id",
+  authMiddleware,
+  accountController.ExperienceView
+);
 router.put(
   "/experiences/:id",
   authMiddleware,

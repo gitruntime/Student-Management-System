@@ -7,6 +7,8 @@ const {
   Account,
   Student,
   ClassSubject,
+  Exam,
+  ExamSubject,
 } = require("../../../models");
 const { calculateTotalPages } = require("../../../utils/handlers");
 const { tryCatch } = require("../../../utils/handlers/tryCatch");
@@ -334,7 +336,7 @@ const getTeachersFromClass = tryCatch(async (req, res, next) => {
     include: [
       {
         model: Teacher,
-        attributes: ["accountId"], // Direct fields in Teacher table
+        attributes: ["id", "accountId"], // Direct fields in Teacher table
         include: [
           {
             model: Account,
@@ -364,6 +366,8 @@ const getTeachersFromClass = tryCatch(async (req, res, next) => {
     ],
     attributes: ["id", "teacherRole", "classId", "teacherId", "subjectId"], // Fields from ClassTeacher table
   });
+
+  console.dir(data, "pppppppppppppppppppppppppppppppppppppppppp");
 
   data = data.map((teacher) => {
     return {
@@ -565,6 +569,22 @@ const fetchClassStudents = tryCatch(async (req, res, next) => {
     .json({ message: "Student data fetched Successfully.!", data });
 });
 
+const fetchClassExams = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const data = await Exam.findAll({
+    where: {
+      classId: id,
+    },
+    include: [
+      {
+        model: ExamSubject,
+        as: "examSubjects",
+      },
+    ],
+  });
+  return res.status(200).json({ message: "Exam's fetched successfully", data });
+});
+
 module.exports = {
   classList,
   classCreate,
@@ -580,4 +600,5 @@ module.exports = {
   removeTeacherFromClass,
   fetchClassStudents,
   getClassSubjects,
+  fetchClassExams,
 };

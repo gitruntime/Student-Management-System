@@ -4,8 +4,8 @@ const express = require("express");
  */
 const router = express.Router();
 
-const { authMiddleware, validate } = require("../../middlewares");
-const { AccountController } = require("../../controllers/students");
+const { authMiddleware, validate } = require("../../../middlewares");
+const { AccountController } = require("../../../controllers/students/v2");
 const {
   StudentGoalSchema,
   StudentProfileSchema,
@@ -13,7 +13,7 @@ const {
   AddressSchema,
   interestSchema,
   interestDeleteSchema,
-} = require("../../utils/validators/students/account.validator");
+} = require("../../../utils/validators/students/account.validator");
 
 router.get("/profile", authMiddleware, AccountController.ViewProfileData);
 router.get("/dashboard", authMiddleware, AccountController.Dashboard);
@@ -23,24 +23,24 @@ router.put(
   validate(StudentProfileSchema),
   AccountController.UpdateProfileData
 );
-router.get("/addresses", authMiddleware, AccountController.AddressList);
-router.post(
-  "/addresses",
-  authMiddleware,
-  validate(AddressSchema),
-  AccountController.AddressCreate
-);
-router.put(
-  "/addresses/:id",
-  authMiddleware,
-  validate(AddressSchema),
-  AccountController.AddressUpdate
-);
-router.delete(
-  "/addresses/:id",
-  authMiddleware,
-  AccountController.AddressDelete
-);
+// router.get("/addresses", authMiddleware, AccountController.AddressList);
+// router.post(
+//   "/addresses",
+//   authMiddleware,
+//   validate(AddressSchema),
+//   AccountController.AddressCreate
+// );
+// router.put(
+//   "/addresses/:id",
+//   authMiddleware,
+//   validate(AddressSchema),
+//   AccountController.AddressUpdate
+// );
+// router.delete(
+//   "/addresses/:id",
+//   authMiddleware,
+//   AccountController.AddressDelete
+// );
 router.get("/goals", authMiddleware, AccountController.GoalList);
 router.post(
   "/goals",

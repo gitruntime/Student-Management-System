@@ -419,9 +419,6 @@ StudentExamScore.belongsTo(ExamSubject, {
 Class.hasMany(Assignment, { foreignKey: "classId" });
 Assignment.belongsTo(Class, { foreignKey: "classId" });
 
-Subject.hasMany(Assignment, { foreignKey: "subjectId" });
-Assignment.belongsTo(Subject, { foreignKey: "subjectId" });
-
 Account.hasMany(Assignment, { foreignKey: "assignedBy" });
 Assignment.belongsTo(Account, { foreignKey: "assignedBy" });
 

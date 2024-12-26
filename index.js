@@ -9,7 +9,9 @@ const authRouter = require("./src/routes/accounts/authentication.route");
 const adminRouter = require("./src/routes/admin/index");
 const v2adminRouter = require("./src/routes/admin/v2/index");
 const teacherRouter = require("./src/routes/teachers/index");
+const v2teacherRouter = require("./src/routes/teachers/v2/index");
 const StudentRouter = require("./src/routes/students/index");
+const v2StudentRouter = require("./src/routes/students/v2/index");
 const nodeAdmin = require("./src/routes/superadmin/index");
 
 const port = process.env.PORT || 3000;
@@ -40,7 +42,7 @@ app.options("*", cors(corsOptions));
 // app.use("/api/docs/student", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 // app.use("/api/docs/parent", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.get("/api/check-domain", checkDomain);
+app.get("/api/v2/check-domain", checkDomain);
 app.use(parseIntMiddleware);
 
 app.use(tenantMiddleware);
@@ -54,10 +56,10 @@ app.use("/api/student", StudentRouter);
 
 app.use("/api/v2/admin", v2adminRouter);
 // app.use("/api/v2/superadmin", nodeAdmin);
-app.use("/api/v2/teacher", teacherRouter);
-// app.use("/api/v2/student", StudentRouter);
+app.use("/api/v2/teacher", v2teacherRouter);
+app.use("/api/v2/student", v2StudentRouter);
 
-app.post("/api/upload", upload.single("file"), (req, res) => {
+app.post("/api/v2/upload", upload.single("file"), (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "No file uploaded" });
   }
@@ -66,13 +68,13 @@ app.post("/api/upload", upload.single("file"), (req, res) => {
     name: req.file.filename,
     size: req.file.size,
   };
-  res.json({
+  return res.json({
     message: "File uploaded successfully",
     data,
   });
 });
 
-app.post("/api/uploads", upload.array("files"), (req, res) => {
+app.post("/api/v2/uploads", upload.array("files"), (req, res) => {
   if (!req.files || req.files.length === 0) {
     return res.status(400).json({ error: "No files uploaded" });
   }
@@ -82,7 +84,7 @@ app.post("/api/uploads", upload.array("files"), (req, res) => {
   });
 
   // Respond with file URLs
-  res.json({
+  return res.json({
     message: "Files uploaded successfully",
     fileUrls,
   });

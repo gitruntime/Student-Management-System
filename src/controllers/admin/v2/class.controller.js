@@ -7,6 +7,8 @@ const {
   Account,
   Student,
   ClassSubject,
+  Exam,
+  ExamSubject,
 } = require("../../../models");
 const { calculateTotalPages } = require("../../../utils/handlers");
 const { tryCatch } = require("../../../utils/handlers/tryCatch");
@@ -143,7 +145,6 @@ const classCreate = async (req, res, next) => {
         error: { name: "Class already registered" },
       });
     } // Avoid duplication
-    console.log(classDetails);
 
     data = await Class.create(
       {
@@ -335,7 +336,7 @@ const getTeachersFromClass = tryCatch(async (req, res, next) => {
     include: [
       {
         model: Teacher,
-        attributes: ["accountId"], // Direct fields in Teacher table
+        attributes: ["id", "accountId"], // Direct fields in Teacher table
         include: [
           {
             model: Account,
@@ -366,6 +367,8 @@ const getTeachersFromClass = tryCatch(async (req, res, next) => {
     attributes: ["id", "teacherRole", "classId", "teacherId", "subjectId"], // Fields from ClassTeacher table
   });
 
+  console.dir(data, "pppppppppppppppppppppppppppppppppppppppppp");
+
   data = data.map((teacher) => {
     return {
       id: teacher.Teacher.accountId,
@@ -393,54 +396,70 @@ const getTeachersFromClass = tryCatch(async (req, res, next) => {
 });
 
 // Developed
-// !bug is there
 const addTeacherstoClass = tryCatch(async (req, res, next) => {
   // class Id
   const { id } = req.params;
-  const teacherInstance = await Teacher.findOne({
+
+  const teacher = await Teacher.findOne({
     where: { accountId: req.validatedData.teacherId },
     attributes: ["accountId", "id"],
   });
 
-  if (!teacherInstance) {
+  if (!teacher) {
     return res.status(404).json({
       message: "Teacher not found.",
       error: { teacherId: "Please select the teacher again" },
     });
   }
 
+  const isClassHasSubject = await ClassSubject.findOne({
+    where: { subjectId: req.validatedData.subjectId, classId: id },
+  });
+
+  if (!isClassHasSubject) {
+    return res.status(404).json({
+      message: "Validation Error",
+      error: { subjectId: "The subject is not associated with this class" },
+    });
+  }
+
   if (req.validatedData.teacherRole === "class") {
-    const isClassTeacherExist = await ClassTeacher.findOne({
+    let isClassTeacherExist = await ClassTeacher.findOne({
+      where: {
+        teacherId: teacher.id,
+        teacherRole: "class",
+      },
+    });
+    if (isClassTeacherExist) {
+      return res.status(400).json({
+        message: "Validation Error",
+        version: "v2",
+        error: {
+          teacherId: `Teacher is already assigned to ${isClassTeacherExist.classId == id ? "this" : "a"} class as Class Teacher`,
+        },
+      });
+    }
+
+    const isClassHasClassTeacher = await ClassTeacher.findOne({
       where: {
         classId: id,
         teacherRole: "class",
       },
     });
-
-    if (isClassTeacherExist)
+    if (isClassHasClassTeacher) {
       return res.status(400).json({
-        message:
-          "Class teacher already exist.You need to proceed with transfer option",
-        error: { teacherRole: "A class can only one class teacher" },
+        message: "Validation Error",
+        version: "v2",
+        error: {
+          subjectId: "This class has already assigned to a class teacher",
+        },
       });
-
-    const isClassSubject = await ClassSubject.findOne({
-      where: {
-        classId: id,
-        subjectId: req.validatedData.subjectId,
-      },
-    });
-
-    if (!isClassSubject)
-      return res.status(400).json({
-        message: "Subject is not associated with this class",
-        error: { subjectId: "Add the subject to this class" },
-      });
+    }
 
     const data = await ClassTeacher.create({
       subjectId: req.validatedData.subjectId,
       classId: id,
-      teacherId: teacherInstance.id,
+      teacherId: teacher.id,
       teacherRole: "class",
     });
     return res
@@ -448,39 +467,31 @@ const addTeacherstoClass = tryCatch(async (req, res, next) => {
       .json({ data, version: 2, message: "Class teacher added successfully" });
   }
 
-  const isClassSubject = await ClassSubject.findOne({
+  const isClassHasSubjectTeacher = await ClassTeacher.findOne({
     where: {
+      teacherId: teacher.id,
       classId: id,
+      teacherRole: "subject",
       subjectId: req.validatedData.subjectId,
     },
   });
 
-  if (!isClassSubject)
+  if (isClassHasSubjectTeacher) {
     return res.status(400).json({
-      message: "Subject is not associated with this class",
-      error: { subjectId: "Add the subject to this class" },
-    });
-
-  let data = await ClassTeacher.findOne({
-    where: {
-      classId: id,
-      teacherId: teacherInstance.id,
-      subjectId: req.validatedData.subjectId,
-    },
-  });
-
-  if (data) {
-    return res.status(400).json({
-      message: "Data alrready exist",
-      error: { teacherId: "Teacher data already exist" },
+      message: "Validation Error",
+      error: {
+        subjectId: "This data is already exist",
+        teacherId: "This data is already exist",
+        teacherRole: "This data is already exist",
+      },
     });
   }
 
-  data = await ClassTeacher.create({
+  const data = await ClassTeacher.create({
     subjectId: req.validatedData.subjectId,
-    teacherRole: req.validatedData.teacherRole,
     classId: id,
-    teacherId: teacherInstance.id,
+    teacherId: teacher.id,
+    teacherRole: "subject",
   });
 
   return res.status(201).json({
@@ -488,6 +499,24 @@ const addTeacherstoClass = tryCatch(async (req, res, next) => {
     data,
     version: 2,
   });
+});
+
+const addSubjectstoClass = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const { subjectId } = req.validatedData;
+  const subject = await Subject.findOne({ where: { id: subjectId } });
+  const isDataAlreadyExist = await ClassSubject.findOne({
+    where: {
+      classId: id,
+      subjectId: subjectId,
+    },
+  });
+  if (isDataAlreadyExist) {
+    return res.status(400).json({
+      message: "",
+      error: su,
+    });
+  }
 });
 
 // !need to look into this
@@ -540,6 +569,22 @@ const fetchClassStudents = tryCatch(async (req, res, next) => {
     .json({ message: "Student data fetched Successfully.!", data });
 });
 
+const fetchClassExams = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const data = await Exam.findAll({
+    where: {
+      classId: id,
+    },
+    include: [
+      {
+        model: ExamSubject,
+        as: "examSubjects",
+      },
+    ],
+  });
+  return res.status(200).json({ message: "Exam's fetched successfully", data });
+});
+
 module.exports = {
   classList,
   classCreate,
@@ -555,4 +600,5 @@ module.exports = {
   removeTeacherFromClass,
   fetchClassStudents,
   getClassSubjects,
+  fetchClassExams,
 };

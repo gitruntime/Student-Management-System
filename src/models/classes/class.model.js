@@ -94,6 +94,9 @@ Assignment.init(
       type: DataTypes.ENUM("high", "medium", "low"),
       defaultValue: "high",
     },
+    description: {
+      type: DataTypes.STRING,
+    },
   },
   {
     sequelize,

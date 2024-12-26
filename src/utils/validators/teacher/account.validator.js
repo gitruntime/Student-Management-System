@@ -28,15 +28,53 @@ const certificateSchema = Joi.object({
 const educationSchema = Joi.object({
   name: Joi.string().required(),
   fieldOfStudy: Joi.string().required(),
-  startDate: Joi.date().required(),
-  endDate: Joi.date().required(),
+  startDate: Joi.date().required().messages({
+    "any.required": "startDate is required.",
+    "date.base": "startDate must be a valid date.",
+  }),
+  endDate: Joi.date()
+    .when("isPresent", {
+      is: true,
+      then: Joi.valid(null).messages({
+        "any.only": "endDate must be null when isPresent is true.",
+      }),
+      otherwise: Joi.required().messages({
+        "any.required": "endDate is required when isPresent is false.",
+        "date.base": "endDate must be a valid date.",
+      }),
+    })
+    .allow(null),
+  isPresent: Joi.boolean().required().messages({
+    "any.required": "isPresent is required.",
+    "boolean.base": "isPresent must be a boolean value.",
+  }),
   description: Joi.string().optional(),
+  location: Joi.string().required(),
 });
 
 const experienceSchema = Joi.object({
-  department: Joi.string().required(),
-  designation: Joi.string().required(),
-  dateJoined: Joi.date().required(),
+  title: Joi.string().required(),
+  company: Joi.string().required(),
+  startDate: Joi.date().required().messages({
+    "any.required": "startDate is required.",
+    "date.base": "startDate must be a valid date.",
+  }),
+  endDate: Joi.date()
+    .when("isPresent", {
+      is: true,
+      then: Joi.valid(null).messages({
+        "any.only": "endDate must be null when isPresent is true.",
+      }),
+      otherwise: Joi.required().messages({
+        "any.required": "endDate is required when isPresent is false.",
+        "date.base": "endDate must be a valid date.",
+      }),
+    })
+    .allow(null),
+  isPresent: Joi.boolean().required().messages({
+    "any.required": "isPresent is required.",
+    "boolean.base": "isPresent must be a boolean value.",
+  }),
 });
 
 module.exports = {

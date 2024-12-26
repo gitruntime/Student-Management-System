@@ -9,17 +9,6 @@ const {
 const { tryCatch } = require("../../../utils/handlers/tryCatch");
 
 const examList = tryCatch(async (req, res, next) => {
-  const { studentId } = req.query;
-  const whereCondition = {
-    tenantId: req.tenant.id,
-  };
-  if (studentId) {
-    const student = await Student.findOne({
-      where: { accountId: studentId, tenantId: req.tenant.id },
-      attributes: ["classId"],
-    });
-    whereCondition.classId = student.classId;
-  }
 
   let data = await Exam.findAll({
     where: whereCondition,
@@ -46,13 +35,11 @@ const examList = tryCatch(async (req, res, next) => {
       classId: exam.classId,
       subjects: exam.examSubjects.map((subject) => {
         return {
-          id: subject.id,
           subjectId: subject.subjectId,
           maxScore: subject.maxScore,
           startTime: subject.startTime,
           endTime: subject.endTime,
           examDate: subject.examDate,
-          subjectName: subject.Subject.name + " " + subject.Subject.code,
         };
       }),
       subjectDetails: exam.examSubjects.map((subject) => {
@@ -70,7 +57,7 @@ const examList = tryCatch(async (req, res, next) => {
 // Used transaction here for partial data creation
 const examCreate = tryCatch(async (req, res, next) => {
   const { subjects, ...exam } = req.validatedData;
-  const transaction = await sequelize.transaction();  
+  const transaction = await sequelize.transaction();
   try {
     const data = await Exam.create(
       {

@@ -168,66 +168,46 @@ const ExperienceCreate = tryCatch(async (req, res, next) => {
     .json({ message: "Experience created successfully.", data, version: "v2" });
 });
 
-// const ExperienceView = tryCatch(async (req, res, next) => {
-//   const { id } = req.params;
-//   const teacher = await Teacher.findOne({
-//     where: { accountId: req.user.id },
-//     attributes: ["id"],
-//   });
+const ExperienceUpdate = tryCatch(async (req, res, next) => {
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id },
+    attributes: ["id"],
+  });
 
-//   if (!teacher) {
-//     return res.status(404).json({ message: "Teacher not found." });
-//   }
+  if (!teacher) {
+    return res.status(404).json({ message: "Teacher not found." });
+  }
+  const { id } = req.params;
 
-//   const data = await Experience.findOne({
-//     where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
-//   });
-//   if (!data) return res.status(404).json({ message: "Experience not found" });
-//   return res
-//     .status(200)
-//     .json({ data, message: "Experience fetched successfully" });
-// });
+  const data = await Experience.findOne({
+    where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
+  });
+  if (!data) return res.status(404).json({ message: "Experience not found" });
+  data.updateFormData(req.validatedData);
+  await data.save();
+  return res
+    .status(200)
+    .json({ message: "Experience updated successfully", data });
+});
 
-// const ExperienceUpdate = tryCatch(async (req, res, next) => {
-//   const teacher = await Teacher.findOne({
-//     where: { accountId: req.user.id },
-//     attributes: ["id"],
-//   });
+const ExperienceDelete = tryCatch(async (req, res, next) => {
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id },
+    attributes: ["id"],
+  });
 
-//   if (!teacher) {
-//     return res.status(404).json({ message: "Teacher not found." });
-//   }
-//   const { id } = req.params;
+  if (!teacher) {
+    return res.status(404).json({ message: "Teacher not found." });
+  }
 
-//   const data = await Experience.findOne({
-//     where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
-//   });
-//   if (!data) return res.status(404).json({ message: "Experience not found" });
-//   data.updateFormData(req.validatedData);
-//   await data.save();
-//   return res
-//     .status(200)
-//     .json({ message: "Experience updated successfully", data });
-// });
-
-// const ExperienceDelete = tryCatch(async (req, res, next) => {
-//   const teacher = await Teacher.findOne({
-//     where: { accountId: req.user.id },
-//     attributes: ["id"],
-//   });
-
-//   if (!teacher) {
-//     return res.status(404).json({ message: "Teacher not found." });
-//   }
-
-//   const { id } = req.params;
-//   const data = await Experience.findOne({
-//     where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
-//   });
-//   if (!data) return res.status(404).json({ message: "Experience not found" });
-//   await data.destroy();
-//   return res.status(200).json({ message: "Experience deleted Successfully." });
-// });
+  const { id } = req.params;
+  const data = await Experience.findOne({
+    where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
+  });
+  if (!data) return res.status(404).json({ message: "Experience not found" });
+  await data.destroy();
+  return res.status(200).json({ message: "Experience deleted Successfully." });
+});
 
 // const CertificateList = tryCatch(async (req, res, next) => {
 //   const { size: limit = 10, page = 1 } = req.query;
@@ -334,66 +314,54 @@ const EducationCreate = tryCatch(async (req, res) => {
     .json({ message: "Education created successfully.", data, version: "v2" });
 });
 
-// const EducationView = tryCatch(async (req, res) => {
-//   const teacher = await Teacher.findOne({
-//     where: { accountId: req.user.id },
-//     attributes: ["id"],
-//   });
+const EducationUpdate = tryCatch(async (req, res) => {
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id },
+    attributes: ["id"],
+  });
 
-//   if (!teacher) {
-//     return res.status(404).json({ message: "Teacher not found." });
-//   }
+  if (!teacher) {
+    return res.status(404).json({ message: "Teacher not found." });
+  }
 
-//   const { id } = req.params;
+  const { id } = req.params;
+  const data = await Education.findOne({
+    where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
+  });
+  if (!data)
+    return res
+      .status(404)
+      .json({ message: "Education not found", version: "v2" });
+  data.updateFormData(req.validatedData);
+  await data.save();
+  return res
+    .status(200)
+    .json({ data, message: "Education updated successfully", version: "v2" });
+});
 
-//   const data = await Education.findOne({
-//     where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
-//     attributes: { exclude: ["tenantId", "deletedAt", "teacherId"] },
-//   });
-//   if (!data) return res.status(404).json({ message: "Education not found" });
-//   return res
-//     .status(200)
-//     .json({ data, message: "Education fetched successfully.!" });
-// });
+const EducationDelete = tryCatch(async (req, res) => {
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id },
+    attributes: ["id"],
+  });
 
-// const EducationUpdate = tryCatch(async (req, res) => {
-//   const teacher = await Teacher.findOne({
-//     where: { accountId: req.user.id },
-//     attributes: ["id"],
-//   });
+  if (!teacher) {
+    return res.status(404).json({ message: "Teacher not found." });
+  }
 
-//   if (!teacher) {
-//     return res.status(404).json({ message: "Teacher not found." });
-//   }
-
-//   const { id } = req.params;
-//   const data = await Education.findOne({
-//     where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
-//   });
-//   if (!data) return res.status(404).json({ message: "Education not found" });
-//   data.updateFormData(req.validatedData);
-//   await data.save();
-//   return res.status(200).json({ data });
-// });
-
-// const EducationDelete = tryCatch(async (req, res) => {
-//   const teacher = await Teacher.findOne({
-//     where: { accountId: req.user.id },
-//     attributes: ["id"],
-//   });
-
-//   if (!teacher) {
-//     return res.status(404).json({ message: "Teacher not found." });
-//   }
-
-//   const { id } = req.params;
-//   const data = await Education.findOne({
-//     where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
-//   });
-//   if (!data) return res.status(404).json({ message: "Education not found" });
-//   await data.destroy();
-//   return res.status(200).json({ message: "Education Deleted Successfully.!" });
-// });
+  const { id } = req.params;
+  const data = await Education.findOne({
+    where: { id, tenantId: req.tenant.id, teacherId: teacher.id },
+  });
+  if (!data)
+    return res
+      .status(404)
+      .json({ message: "Education not found", version: "v2" });
+  await data.destroy();
+  return res
+    .status(200)
+    .json({ message: "Education deleted Successfully.!", version: " v2" });
+});
 
 // const DocumentList = tryCatch(async (req, res) => {
 //   const data = await Document.findAll({
@@ -430,9 +398,8 @@ module.exports = {
   //   AddressDelete,
   ExperienceList,
   ExperienceCreate,
-  //   ExperienceView,
-  //   ExperienceUpdate,
-  //   ExperienceDelete,
+  ExperienceUpdate,
+  ExperienceDelete,
   //   CertificateList,
   //   CertificateCreate,
   //   CertificateView,
@@ -440,7 +407,6 @@ module.exports = {
   //   CertificateDelete,
   EducationList,
   EducationCreate,
-  //   EducationView,
-  //   EducationUpdate,
-  //   EducationDelete,
+  EducationUpdate,
+  EducationDelete,
 };

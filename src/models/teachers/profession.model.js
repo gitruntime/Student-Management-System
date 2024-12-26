@@ -64,22 +64,27 @@ Experience.init(
         key: "id",
       },
     },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: "Senior Developer",
+    },
     company: {
       type: DataTypes.STRING,
       allowNull: false,
-      defaultValue:"Company 1"
+      defaultValue: "X Company",
     },
-    department: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    designation: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    dateJoined: {
+    startDate: {
       type: DataTypes.DATEONLY,
       allowNull: false,
+    },
+    endDate: {
+      type: DataTypes.DATEONLY,
+      allowNull: true,
+    },
+    isPresent: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
     },
   },
   {
@@ -88,6 +93,16 @@ Experience.init(
     paranoid: true,
     timestamps: true,
     underscored: true,
+    validate: {
+      endDateRequiredIfNotPresent() {
+        if (!this.isPresent && !this.endDate) {
+          throw new Error("endDate is required when isPresent is false.");
+        }
+        if (this.isPresent && this.endDate) {
+          throw new Error("endDate must be null when isPresent is true.");
+        }
+      },
+    },
   }
 );
 

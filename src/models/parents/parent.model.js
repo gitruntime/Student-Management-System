@@ -8,7 +8,7 @@ const Parent = db.define(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement:true
+      autoIncrement: true,
     },
     tenantId: {
       type: DataTypes.INTEGER,
@@ -18,6 +18,27 @@ const Parent = db.define(
       },
       field: "tenant_id",
     },
+    profilePicture: {
+      type: DataTypes.STRING,
+    },
+    bio: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    bloodGroup: {
+      type: DataTypes.STRING,
+    },
+    sex: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: true,
+      validate: {
+        isIn: {
+          args: [["male", "female", "other", null]],
+          msg: "Must be either male, female, or other",
+        },
+      },
+    },
   },
   {
     tableName: "parents",
@@ -26,7 +47,7 @@ const Parent = db.define(
     createdAt: "created_at",
     updatedAt: "updated_at",
     deletedAt: "deleted_at",
-  },
+  }
 );
 
 module.exports = {

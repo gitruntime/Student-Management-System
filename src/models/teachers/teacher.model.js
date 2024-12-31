@@ -38,6 +38,17 @@ Teacher.init(
         },
       },
     },
+    sex: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      validate: {
+        isIn: {
+          args: [["male", "female", "other", null]],
+          msg: "Must be either male, female, or other",
+        },
+      },
+    },
   },
   {
     sequelize,

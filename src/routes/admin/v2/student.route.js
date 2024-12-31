@@ -64,12 +64,18 @@ router.delete(
   studentController.attendanceDelete
 );
 
-// !Developed not Tested
 router.get(
   "/:id/ai/overview",
   authMiddleware,
   isAdmin,
   studentController.aiOverview
+);
+
+router.get(
+  "/:id/ai/astrological",
+  authMiddleware,
+  isAdmin,
+  studentController.aiAstrological
 );
 
 // router.get(

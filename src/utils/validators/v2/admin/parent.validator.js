@@ -1,6 +1,6 @@
 const Joi = require("joi");
 
-const studentPOSTSchema = Joi.object({
+const parentPOSTSchema = Joi.object({
   firstName: Joi.string().required(),
   lastName: Joi.string().optional().allow(""),
   email: Joi.string().email().required(),
@@ -12,7 +12,6 @@ const studentPOSTSchema = Joi.object({
   bloodGroup: Joi.string().optional().allow(""),
   sex: Joi.string().optional().allow(""),
   password: Joi.string()
-    .required()
     .min(8)
     .max(12)
     .custom((value, helpers) => {
@@ -40,18 +39,19 @@ const studentPOSTSchema = Joi.object({
       return value;
     })
     .default("Password@123"),
-  classId: Joi.string().regex(/^\d+$/).required(),
+  students: Joi.array()
+    .items(Joi.string().alphanum().min(1).required())
+    .messages({
+      "array.base": "IDs must be an array",
+      "array.empty": "IDs cannot be empty",
+      "array.min": "At least one ID is required",
+      "string.base": "Each ID must be a string",
+      "string.empty": "Each ID cannot be empty",
+      "string.alphanum": "Each ID must be alphanumeric",
+      "any.required": "IDs are required",
+    }),
 });
 
-const attendancePOSTSchema = Joi.object({
-  attendanceDate: Joi.date().required(),
-  status: Joi.string().valid("present", "absent", "excused", "late").required(),
-  checkIn: Joi.string().pattern(
-    /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/
-  ),
-  checkOut: Joi.string().pattern(
-    /^([0-1]?[0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$/
-  ),
-});
-
-module.exports = { studentPOSTSchema, attendancePOSTSchema };
+module.exports = {
+  parentPOSTSchema,
+};

@@ -13,7 +13,7 @@ Student.init(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement:true
+      autoIncrement: true,
     },
     tenantId: {
       type: DataTypes.INTEGER,
@@ -33,6 +33,17 @@ Student.init(
     bloodGroup: {
       type: DataTypes.STRING,
     },
+    sex: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: null,
+      validate: {
+        isIn: {
+          args: [["male", "female", "other", null]],
+          msg: "Must be either male, female, or other",
+        },
+      },
+    },
   },
   {
     sequelize,
@@ -41,7 +52,7 @@ Student.init(
     timestamps: true,
     paranoid: true,
     underscored: true,
-  },
+  }
 );
 
 module.exports = {

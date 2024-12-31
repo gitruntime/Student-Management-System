@@ -40,9 +40,9 @@ const generateUniqueEmail = () => {
     // await Account.sync({ alter: true });
     // await Admin.sync({ alter: true });
     // await Education.sync({ alter: true });
-    // await db.sync({ alter: true });
+    await db.sync({ alter: true });
     // await Experience.sync({ force: true });
-    await Assignment.sync({ alter: true });
+    // await Assignment.sync({ alter: true });
 
     // Create Super Admin Account
     // await Account.create({

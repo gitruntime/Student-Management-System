@@ -197,13 +197,28 @@ Account.hasOne(Parent, {
 });
 Parent.belongsTo(Account, { foreignKey: "accountId", as: "accounts" });
 
-Parent.hasMany(Student, {
-  foreignKey: "parentId",
-  as: "students",
+class ParentStudent extends Model {}
+
+ParentStudent.init(
+  {},
+  {
+    sequelize,
+    timestamps: true,
+    underscored: true,
+    tableName: "parents_students",
+  }
+);
+
+Student.belongsToMany(Parent, {
+  through: ParentStudent,
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
 });
-Student.belongsTo(Parent, {
-  foreignKey: "parentId",
-  as: "studentProfile",
+
+Parent.belongsToMany(Student, {
+  through: ParentStudent,
+  onDelete: "CASCADE",
+  onUpdate: "CASCADE",
 });
 
 // Class ------------------------------------------------------------------->
@@ -518,4 +533,5 @@ module.exports = {
   Exam,
   ClassSubject,
   Document,
+  ParentStudent,
 };

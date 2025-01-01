@@ -67,10 +67,10 @@ const examList = tryCatch(async (req, res, next) => {
   return res.status(200).json({ message: "Exam fetched successfully", data });
 });
 
-// Used transaction here for partial data creation
+// Used transaction here for preventing partial data creation
 const examCreate = tryCatch(async (req, res, next) => {
   const { subjects, ...exam } = req.validatedData;
-  const transaction = await sequelize.transaction();  
+  const transaction = await sequelize.transaction();
   try {
     const data = await Exam.create(
       {
@@ -87,6 +87,11 @@ const examCreate = tryCatch(async (req, res, next) => {
       examId: data.id,
       tenantId: req.tenant.id,
     }));
+    console.log(
+      subjectData,
+      "----------------------------------------------------------------"
+    );
+
     await ExamSubject.bulkCreate(subjectData, { transaction });
     const examWithSubjects = await Exam.findOne({
       where: { id: data.id },

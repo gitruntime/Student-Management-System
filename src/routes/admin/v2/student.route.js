@@ -72,6 +72,13 @@ router.get(
 );
 
 router.get(
+  "/:id/ai/career",
+  authMiddleware,
+  isAdmin,
+  studentController.aiCareer
+);
+
+router.get(
   "/:id/ai/astrological",
   authMiddleware,
   isAdmin,

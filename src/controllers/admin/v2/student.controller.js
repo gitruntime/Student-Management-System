@@ -740,6 +740,8 @@ const getCompleteStudentData = async (id, student, tenantId) => {
     ? goalData.map((item) => item.get({ plain: true }))
     : null;
 
+  console.log(plainGoalData, "=======================================>");
+
   // const plainAwardData = awardData
   //   ? awardData.map((item) => item.get({ plain: true }))
   //   : null;
@@ -878,11 +880,16 @@ const aiOverview = tryCatch(async (req, res, next) => {
 
   if (!student) return res.status(404).json({ message: "Student not found" });
 
-  const studentData = getCompleteStudentData(id, student, req.tenant.id);
+  const studentData = await getCompleteStudentData(id, student, req.tenant.id);
+
+  console.log(
+    studentData,
+    "=================================><====================="
+  );
 
   const schema = {
     description:
-      "Student profile analysis based on academic performance, extracurricular activities, and stated interests.",
+      "Student profile analysis based on academic performance, extracurricular activities, goals and stated interests.",
     type: SchemaType.OBJECT,
     properties: {
       skillAssessment: {
@@ -960,7 +967,6 @@ const aiOverview = tryCatch(async (req, res, next) => {
     - Career Recommendations:
       Suggest **5 potential career paths** aligned with the student's skills and interests.
       - Include a brief description explaining the suitability of each recommendation.
-      - If insufficient data is available, state that career recommendations cannot be generated.
   
     **Output Format:**
     - **Skill Assessment:** An array of objects with skill name, value (percentage), fill color, and evidence.
@@ -1094,23 +1100,132 @@ const aiOverview = tryCatch(async (req, res, next) => {
 
   return res.status(200).json({
     message: "Data fetched Successfully",
-    data: result.response.text(),
+    data: JSON.parse(result.response.text()),
   });
 });
 
-// const aiCareer = tryCatch(async (req, res, next) => {
-//   const { id } = req.params;
+const aiCareer = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const { role } = req.query;
 
-//   const student = await Student.findOne({
-//     where: { accountId: id, tenantId: req.tenant.id },
-//     attributes: ["id", "accountId"],
-//   });
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: ["id", "accountId"],
+  });
 
-//   if (!student) return res.status(404).json({ message: "Student not found" });
+  if (!student) return res.status(404).json({ message: "Student not found" });
 
-//   const studentData = getCompleteStudentData(id, student, req.tenant.id);
+  const studentData = getCompleteStudentData(id, student, req.tenant.id);
 
-// });
+  const schema = {
+    description:
+      "Roadmap generation for a student's career development based on their profile and interests.",
+    type: SchemaType.OBJECT,
+    properties: {
+      roadmap: {
+        type: SchemaType.OBJECT,
+        description:
+          "Detailed roadmap for achieving the target career, including title, subtitle, timeline, key steps, challenges, and strategies.",
+        properties: {
+          title: {
+            type: SchemaType.STRING,
+            description: "The title of the roadmap.",
+            nullable: false,
+          },
+          subtitle: {
+            type: SchemaType.STRING,
+            description:
+              "The subtitle of the roadmap providing additional context.",
+            nullable: false,
+          },
+          timeline: {
+            type: SchemaType.STRING,
+            description:
+              "A realistic timeline for achieving the target career goal.",
+            nullable: false,
+          },
+          keySteps: {
+            type: SchemaType.ARRAY,
+            description: "Step-by-step guide to achieve the career goal.",
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                step: {
+                  type: SchemaType.STRING,
+                  description: "Description of the specific step.",
+                  nullable: false,
+                },
+                icon: {
+                  type: SchemaType.STRING,
+                  description:
+                    "Icon representation for the step, provided as the name of the component (e.g., 'IconBuilding') from the lucid-react library.",
+
+                  nullable: false,
+                },
+                skills: {
+                  type: SchemaType.ARRAY,
+                  description: "List of essential skills for the step.",
+                  items: {
+                    type: SchemaType.STRING,
+                  },
+                  nullable: false,
+                },
+                timeframe: {
+                  type: SchemaType.STRING,
+                  description: "Time required to complete this step.",
+                  nullable: false,
+                },
+              },
+              required: ["step", "icon", "skills", "timeframe"],
+            },
+          },
+          potentialChallenges: {
+            type: SchemaType.ARRAY,
+            description:
+              "Potential challenges during the career development process and strategies to overcome them.",
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                challenge: {
+                  type: SchemaType.STRING,
+                  description: "Description of the challenge.",
+                  nullable: false,
+                },
+                strategy: {
+                  type: SchemaType.STRING,
+                  description: "Strategy to address the challenge.",
+                  nullable: false,
+                },
+              },
+              required: ["challenge", "strategy"],
+            },
+          },
+        },
+        required: [
+          "title",
+          "subtitle",
+          "timeline",
+          "keySteps",
+          "potentialChallenges",
+        ],
+      },
+    },
+    required: ["roadmap"],
+  };
+
+  const model = ai(schema);
+
+  const result = await model.generateContent(
+    `Based on the student data ${studentData}, What is a realistic timeline to become an ${role} Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?`
+  );
+
+  console.log(result.response.text());
+
+  return res.status(200).json({
+    message: "Data fetched Successfully",
+    data: JSON.parse(result.response.text()),
+  });
+});
 
 const ListMarks = tryCatch(async (req, res, next) => {
   const { id } = req.params;
@@ -1143,6 +1258,7 @@ const ListMarks = tryCatch(async (req, res, next) => {
 
 const CreateMarks = tryCatch(async (req, res, next) => {
   const { id } = req.params;
+
   const student = await Student.findOne({
     where: { accountId: id, tenantId: req.tenant.id },
   });
@@ -1408,6 +1524,7 @@ module.exports = {
   attendanceDelete,
   aiOverview,
   aiAstrological,
+  aiCareer,
   StudentView,
   // addressList,
   ListMarks,

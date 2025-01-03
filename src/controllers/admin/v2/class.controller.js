@@ -579,6 +579,11 @@ const fetchClassExams = tryCatch(async (req, res, next) => {
       {
         model: ExamSubject,
         as: "examSubjects",
+        include: [
+          {
+            model: Subject,
+          },
+        ],
       },
     ],
   });

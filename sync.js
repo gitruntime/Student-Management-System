@@ -33,14 +33,14 @@ const generateUniqueEmail = () => {
   try {
     // await db.authenticate();
     // await db.drop({ cascade: true });
-    // await Tenant.sync({ force: true });
+    await Tenant.sync({ alter: true });
     // await Account.sync({ alter: true });
     // await Volunteer.sync({ alter: true });
     // await ExamSubject.sync({ alter: true });
-    // await Account.sync({ alter: true });
-    // await Admin.sync({ alter: true });
+    await Account.sync({ alter: true });
+    await Admin.sync({ alter: true });
     // await Education.sync({ alter: true });
-    await db.sync({ alter: true });
+    // await db.sync({ alter: true });
     // await Experience.sync({ force: true });
     // await Assignment.sync({ alter: true });
 

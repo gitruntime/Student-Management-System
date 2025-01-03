@@ -1,3 +1,4 @@
+const { SchemaType } = require("@google/generative-ai");
 const {
   Teacher,
   ClassTeacher,
@@ -6,7 +7,11 @@ const {
   Class,
   Attendance,
 } = require("../../../models");
+const { Interest } = require("../../../models/core");
+const { Goal } = require("../../../models/students/academic.model");
 const { tryCatch, calculateTotalPages } = require("../../../utils/handlers");
+const { getCompleteStudentData } = require("../../admin/v2/student.controller");
+const { ai } = require("../../../configs/ai.config");
 
 const StudentList = tryCatch(async (req, res, next) => {
   const { page = 1, size: limit = 10 } = req.query;
@@ -62,6 +67,18 @@ const StudentList = tryCatch(async (req, res, next) => {
 
 const StudentView = tryCatch(async (req, res, next) => {
   const { id } = req.params;
+
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
+  });
+
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
+
+  const classIds = classIdInstance.map((item) => item.classId);
+
   const data = await Account.findOne({
     where: {
       id,
@@ -73,20 +90,15 @@ const StudentView = tryCatch(async (req, res, next) => {
         model: Student,
         as: "studentProfile",
         attributes: {
-          exclude: [
-            "tenantId",
-            "id",
-            "deletedAt",
-            "classId",
-            "createdAt",
-            "updatedAt",
-          ],
+          exclude: ["tenantId", "id", "deletedAt", "createdAt", "updatedAt"],
         },
+        where: { classId: classIds },
+        required: true, // inner join - validation : - to prevent fetching the students that is not assigned to this particular request teacher
         include: [
           {
             model: Class,
             as: "classDetails",
-            attributes: ["name", "section"],
+            attributes: ["id", "name", "section"],
           },
         ],
       },
@@ -113,8 +125,21 @@ const StudentView = tryCatch(async (req, res, next) => {
     .json({ message: "Student Fetched Successfully.", data, version: "v2" });
 });
 
+// !tested
 const StudentUpdate = tryCatch(async (req, res, next) => {
   const { id } = req.params;
+
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
+  });
+
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
+
+  const classIds = classIdInstance.map((item) => item.classId);
+
   const data = await Account.findOne({
     where: {
       id,
@@ -124,6 +149,15 @@ const StudentUpdate = tryCatch(async (req, res, next) => {
       {
         model: Student,
         as: "studentProfile",
+        required: true, // inner join - validation : - to prevent fetching the students that is not assigned to this particular request teacher
+        where: { classId: classIds },
+        include: [
+          {
+            model: Class,
+            as: "classDetails",
+            attributes: ["id", "name", "section"],
+          },
+        ],
       },
     ],
   });
@@ -176,10 +210,30 @@ const StudentUpdate = tryCatch(async (req, res, next) => {
 
 const attendanceList = tryCatch(async (req, res, next) => {
   const { id } = req.params;
-  const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-    attributes: ["id", "accountId"],
+
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
   });
+
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
+
+  const classIds = classIdInstance.map((item) => item.classId);
+
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id, classId: classIds },
+    attributes: ["id", "accountId"],
+    include: [
+      {
+        model: Class,
+        as: "classDetails",
+        attributes: ["id", "name", "section"],
+      },
+    ],
+  });
+
   if (!student)
     return res.status(404).json({ message: "Requested student not found.!" });
   const { page = 1, size: limit = 100 } = req.query;
@@ -234,6 +288,7 @@ const attendanceList = tryCatch(async (req, res, next) => {
   });
 });
 
+// !Developed & !Tested
 const attendanceCreate = tryCatch(async (req, res, next) => {
   const { id } = req.params;
   const student = await Student.findOne({
@@ -252,6 +307,7 @@ const attendanceCreate = tryCatch(async (req, res, next) => {
     .json({ data, message: "Attendance Created Successfully" });
 });
 
+// !Developed & !Tested
 // const attendanceUpdate = tryCatch(async (req, res, next) => {
 //   const { id, studentId } = req.params;
 //   const student = await Student.findOne({
@@ -272,6 +328,7 @@ const attendanceCreate = tryCatch(async (req, res, next) => {
 //     .json({ data, message: "Attendance Updated Successfully.!!" });
 // });
 
+// !Developed & !Tested
 // const attendanceDelete = tryCatch(async (req, res, next) => {
 //   const { id } = req.params;
 //   const data = await Attendance.findOne({
@@ -286,76 +343,458 @@ const attendanceCreate = tryCatch(async (req, res, next) => {
 //     .json({ data, message: "Attendance Deleted Successfully.!!" });
 // });
 
-// const interestList = tryCatch(async (req, res, next) => {
-//   const { studentId } = req.params;
-//   const student = await Student.findOne({
-//     where: { id: studentId, tenantId: req.tenant.id },
-//     include: [
-//       {
-//         model: Interest,
-//         through: { attributes: [] },
-//       },
-//     ],
-//   });
-//   if (!student) return res.status(404).json({ message: "Student not Found.!" });
-//   const interests = student.Interests;
-//   return res.status(200).json({
-//     message: "Interests fetched successfully.",
-//     data: interests,
-//   });
-// });
+const interestList = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
 
-// const interestAdd = tryCatch(async (req, res, next) => {
-//   const { studentId } = req.params;
-//   const student = await Student.findOne({
-//     where: { id, tenantId: req.tenant.id, studentId },
-//   });
-//   if (!student) return res.status(404).json({ message: "Student Not Found.!" });
-//   const interests = await Promise.all(
-//     req.validatedData.interests.map(async (name) => {
-//       const [interest, created] = await Interest.findOrCreate({
-//         where: { name: name },
-//       });
-//       return interest;
-//     })
-//   );
-//   const interestIds = interests.map((interest) => interest.id);
-//   await student.addInterest(interestIds);
-//   return res
-//     .status(201)
-//     .json({ message: "Interest Added Successfully", data: interests });
-// });
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
+  });
 
-// const interestRemove = tryCatch(async (req, res, next) => {
-//   const { studentId } = req.params;
-//   const { interestIds } = req.body;
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
 
-//   const student = await Student.findOne({
-//     where: { id: studentId, tenantId: req.tenant.id },
-//   });
+  const classIds = classIdInstance.map((item) => item.classId);
 
-//   if (!student) {
-//     return res.status(404).json({ message: "Student not Found." });
-//   }
+  const student = await Account.findOne({
+    where: { id, tenantId: req.tenant.id },
+    include: [
+      {
+        model: Interest,
+        through: { attributes: [] },
+      },
+      {
+        model: Student,
+        as: "studentProfile",
+        where: { tenantId: req.tenant.id, classId: classIds },
+        attributes: ["profilePicture", "bio", "bloodGroup"],
+        required: true,
+      },
+    ],
+  });
+  if (!student) return res.status(404).json({ message: "Student not Found.!" });
+  const interests = student.Interests;
+  return res.status(200).json({
+    message: "Interests fetched successfully.",
+    data: interests,
+  });
+});
 
-//   const interests = await Interest.findAll({
-//     where: {
-//       id: interestIds,
-//     },
-//   });
+const GoalList = tryCatch(async (req, res) => {
+  const { id } = req.params;
 
-//   if (!interests)
-//     return res
-//       .status(404)
-//       .json({ message: "No interests found with the provided IDs." });
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
+  });
 
-//   await student.removeInterests(interests);
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
 
-//   return res.status(200).json({
-//     message: "Interests removed successfully.",
-//     data: interests,
-//   });
-// });
+  const classIds = classIdInstance.map((item) => item.classId);
+
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id, classId: classIds },
+    attributes: [],
+    include: [
+      {
+        model: Goal,
+        as: "goals",
+        attributes: ["id", "name", "description", "type"],
+      },
+    ],
+  });
+
+  if (!student) return res.status(404).json({ message: "User not found" });
+
+  return res
+    .status(200)
+    .json({ message: "Goals fetched successfully", data: student.goals });
+});
+
+const aiAstrological = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
+  });
+
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
+
+  const classIds = classIdInstance.map((item) => item.classId);
+
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id, classId: classIds },
+    attributes: ["id", "accountId"],
+    include: [
+      {
+        model: Account,
+        as: "accounts",
+        attributes: ["id", "dateOfBirth"],
+      },
+    ],
+  });
+
+  if (!student) return res.status(404).json({ message: "Student not found" });
+
+  if (!student.accounts.dateOfBirth)
+    return res.status(400).json({ message: "Date of birth not found.!" });
+
+  const schema = {
+    description: "Astrological data based on a given date of birth",
+    type: SchemaType.OBJECT,
+    properties: {
+      zodiacSign: {
+        type: SchemaType.STRING,
+        description: "The zodiac sign associated with the date of birth",
+        nullable: false,
+      },
+      element: {
+        type: SchemaType.STRING,
+        description:
+          "The element associated with the zodiac sign (e.g., Fire, Water, Air, Earth)",
+        nullable: false,
+      },
+      rulingPlanet: {
+        type: SchemaType.STRING,
+        description: "The ruling planet of the zodiac sign",
+        nullable: false,
+      },
+      traits: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.STRING,
+          description:
+            "List of personality traits associated with the zodiac sign",
+          nullable: false,
+        },
+      },
+      strengths: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.STRING,
+          description: "List of strengths associated with the zodiac sign",
+          nullable: false,
+        },
+      },
+      weaknesses: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.STRING,
+          description: "List of weaknesses associated with the zodiac sign",
+          nullable: false,
+        },
+      },
+      compatibility: {
+        type: SchemaType.ARRAY,
+        items: {
+          type: SchemaType.STRING,
+          description: "Zodiac signs most compatible with the given sign",
+          nullable: false,
+        },
+      },
+      dailyHoroscope: {
+        type: SchemaType.STRING,
+        description: "A short horoscope prediction for the day",
+        nullable: false,
+      },
+    },
+    required: [
+      "zodiacSign",
+      "element",
+      "rulingPlanet",
+      "traits",
+      "strengths",
+      "weaknesses",
+      "compatibility",
+      "dailyHoroscope",
+    ],
+  };
+
+  const model = ai(schema);
+
+  const result = await model.generateContent(
+    `Based on the date of birth ${student.accounts.dateOfBirth}, provide astrological data including:
+    
+    - Zodiac sign
+    - Element (Fire, Water, Air, Earth)
+    - Ruling planet
+    - Personality traits
+    - Strengths
+    - Weaknesses
+    - Compatible zodiac signs
+    - A short daily horoscope prediction.
+    
+    Ensure the data is accurate and aligns with traditional astrological principles.`
+  );
+
+  if (!result.response.text())
+    return res.status(404).json({ message: "Astrological data not found" });
+  return res.status(200).json({
+    message: "Data fetched succcesssfully.! ",
+    data: JSON.parse(result.response.text()),
+  });
+});
+
+const aiOverview = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
+  });
+
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
+
+  const classIds = classIdInstance.map((item) => item.classId);
+
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id, classId: classIds },
+    attributes: ["id", "accountId"],
+  });
+
+  if (!student) return res.status(404).json({ message: "Student not found" });
+  let studentData;
+  try {
+    studentData = await getCompleteStudentData(id, student, req.tenant.id);
+  } catch (error) {
+    console.error(error);
+  }
+
+  const schema = {
+    description:
+      "Student profile analysis based on academic performance, extracurricular activities, goals and stated interests.",
+    type: SchemaType.OBJECT,
+    properties: {
+      skillAssessment: {
+        type: SchemaType.ARRAY,
+        description:
+          "Assessment of the student's skills with percentage ratings and evidence.",
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            skill: {
+              type: SchemaType.STRING,
+              description: "The name of the skill being assessed.",
+              nullable: false,
+            },
+            value: {
+              type: SchemaType.NUMBER,
+              description: "Percentage rating of the skill.",
+              nullable: false,
+            },
+            fill: {
+              type: SchemaType.STRING,
+              description:
+                "Color code associated with the skill rating visualization.",
+              nullable: false,
+            },
+            evidence: {
+              type: SchemaType.STRING,
+              description: "Specific evidence supporting the skill rating.",
+              nullable: true,
+            },
+          },
+          required: ["skill", "value", "fill"],
+        },
+      },
+      careerRecommendations: {
+        type: SchemaType.ARRAY,
+        description:
+          "Potential career paths based on the student's skills and interests.",
+        items: {
+          type: SchemaType.OBJECT,
+          properties: {
+            role: {
+              type: SchemaType.STRING,
+              description: "Suggested career path or role.",
+              nullable: false,
+            },
+            description: {
+              type: SchemaType.STRING,
+              description:
+                "Explanation of why this role is suitable for the student.",
+              nullable: false,
+            },
+          },
+          required: ["role", "description"],
+        },
+      },
+    },
+    required: ["skillAssessment", "careerRecommendations"],
+  };
+
+  const model = ai(schema);
+
+  const result = await model.generateContent(
+    `Analyze the student's profile based on the following data:
+  
+    **Input Data:**
+    ${studentData}
+  
+    **Tasks:**
+    - Skill Assessment:
+      Assess the student's **aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity**.
+      - Provide a **percentage-based rating** for each skill, supported by evidence from the student's profile.
+      - If no data is available for a skill, assign **0%** and note insufficient information.
+  
+    - Career Recommendations:
+      Suggest **5 potential career paths** aligned with the student's skills and interests.
+      - Include a brief description explaining the suitability of each recommendation.
+  
+    **Output Format:**
+    - **Skill Assessment:** An array of objects with skill name, value (percentage), fill color, and evidence.
+    - **Career Recommendations:** An array of objects with role name and description.
+  
+    Ensure all outputs are grounded in the provided data. For missing information, explicitly use fallback values as specified.`
+  );
+
+  return res.status(200).json({
+    message: "Data fetched Successfully",
+    data: JSON.parse(result.response.text()),
+  });
+});
+
+const aiCareer = tryCatch(async (req, res, next) => {
+  const { id } = req.params;
+  const { role } = req.query;
+
+  const teacher = await Teacher.findOne({
+    where: { accountId: req.user.id, tenantId: req.tenant.id },
+  });
+
+  const classIdInstance = await ClassTeacher.findAll({
+    where: { teacherId: teacher.id },
+    attributes: ["classId", "teacherId"],
+  });
+
+  const classIds = classIdInstance.map((item) => item.classId);
+
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id, classId: classIds },
+    attributes: ["id", "accountId"],
+  });
+
+  if (!student) return res.status(404).json({ message: "Student not found" });
+
+  const studentData = getCompleteStudentData(id, student, req.tenant.id);
+
+  const schema = {
+    description:
+      "Roadmap generation for a student's career development based on their profile and interests.",
+    type: SchemaType.OBJECT,
+    properties: {
+      roadmap: {
+        type: SchemaType.OBJECT,
+        description:
+          "Detailed roadmap for achieving the target career, including title, subtitle, timeline, key steps, challenges, and strategies.",
+        properties: {
+          title: {
+            type: SchemaType.STRING,
+            description: "The title of the roadmap.",
+            nullable: false,
+          },
+          subtitle: {
+            type: SchemaType.STRING,
+            description:
+              "The subtitle of the roadmap providing additional context.",
+            nullable: false,
+          },
+          timeline: {
+            type: SchemaType.STRING,
+            description:
+              "A realistic timeline for achieving the target career goal.",
+            nullable: false,
+          },
+          keySteps: {
+            type: SchemaType.ARRAY,
+            description: "Step-by-step guide to achieve the career goal.",
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                step: {
+                  type: SchemaType.STRING,
+                  description: "Description of the specific step.",
+                  nullable: false,
+                },
+                icon: {
+                  type: SchemaType.STRING,
+                  description:
+                    "Icon representation for the step, provided as the name of the component (e.g., 'IconBuilding') from the lucid-react library.",
+
+                  nullable: false,
+                },
+                skills: {
+                  type: SchemaType.ARRAY,
+                  description: "List of essential skills for the step.",
+                  items: {
+                    type: SchemaType.STRING,
+                  },
+                  nullable: false,
+                },
+                timeframe: {
+                  type: SchemaType.STRING,
+                  description: "Time required to complete this step.",
+                  nullable: false,
+                },
+              },
+              required: ["step", "icon", "skills", "timeframe"],
+            },
+          },
+          potentialChallenges: {
+            type: SchemaType.ARRAY,
+            description:
+              "Potential challenges during the career development process and strategies to overcome them.",
+            items: {
+              type: SchemaType.OBJECT,
+              properties: {
+                challenge: {
+                  type: SchemaType.STRING,
+                  description: "Description of the challenge.",
+                  nullable: false,
+                },
+                strategy: {
+                  type: SchemaType.STRING,
+                  description: "Strategy to address the challenge.",
+                  nullable: false,
+                },
+              },
+              required: ["challenge", "strategy"],
+            },
+          },
+        },
+        required: [
+          "title",
+          "subtitle",
+          "timeline",
+          "keySteps",
+          "potentialChallenges",
+        ],
+      },
+    },
+    required: ["roadmap"],
+  };
+
+  const model = ai(schema);
+
+  const result = await model.generateContent(
+    `Based on the student data ${studentData}, What is a realistic timeline to become an ${role} Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?`
+  );
+
+  console.log(result.response.text());
+
+  return res.status(200).json({
+    message: "Data fetched Successfully",
+    data: JSON.parse(result.response.text()),
+  });
+});
 
 // const medicalRecordList = tryCatch(async (req, res, next) => {
 //   const { studentId } = req.params;
@@ -491,350 +930,6 @@ const attendanceCreate = tryCatch(async (req, res, next) => {
 //   return res.status(200).json({ message: "Award Deleted Successfully.!!" });
 // });
 
-const extractReason = (data) => {
-  const regex = new RegExp(
-    `\\*\\*Aptitude.*?:([\\s\\S]*?)\\*\\*Curiosity`,
-    "g"
-  );
-  const match = regex.exec(data);
-
-  return match ? match[1].trim() : "";
-};
-
-const extractCareer = (data) => {
-  console.log("Starting to extract career path recommendations...");
-
-  if (data.includes("**Career Path Recommendations:**")) {
-    console.log("Career Path Recommendations section found!");
-
-    const regex = /```json\s*\[\s*(.*?)\s*\]\s*```/gs;
-    const matches = [];
-    let match;
-
-    // Use the regex to find all the JSON blocks in the string
-    while ((match = regex.exec(data)) !== null) {
-      matches.push(match[0]);
-    }
-
-    if (matches.length >= 2) {
-      console.log("Found multiple JSON blocks. Skipping the first one.");
-
-      let cleanedData = matches[1].replace(/```json|```/g, "").trim();
-      console.log(
-        "Cleaned JSON data (removed code block markers):",
-        cleanedData
-      );
-
-      cleanedData = cleanedData.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
-      console.log("Removed comments:", cleanedData);
-
-      cleanedData = cleanedData.replace(/(\w+):/g, '"$1":'); // Ensure keys are quoted properly
-      console.log("Ensured proper quoting of keys:", cleanedData);
-
-      cleanedData = cleanedData.replace(/,\s*}/g, "}"); // Remove trailing commas
-      cleanedData = cleanedData.replace(/,\s*\]/g, "]"); // Remove trailing commas
-      console.log("Removed trailing commas:", cleanedData);
-
-      try {
-        const careerRecommendations = JSON.parse(cleanedData);
-        console.log(
-          "Successfully parsed career recommendations:",
-          careerRecommendations
-        );
-        return [true, careerRecommendations]; // Return parsed career path recommendations
-      } catch (error) {
-        console.error("Error parsing career recommendation data:", error);
-        return [false, "Error parsing career recommendation data."];
-      }
-    } else {
-      console.warn("Not enough JSON data blocks found.");
-      return [false, "Career recommendation data not found or invalid format."];
-    }
-  } else {
-    console.warn("No career path section found in the data.");
-    return [false, "No career recommendation data found."];
-  }
-};
-
-const extractChart = (data) => {
-  if (data.includes("**Skill Assessment:**")) {
-    // Match the JSON data inside the ```json code block
-    const regex = /```json\s*\[\s*(.*?)\s*\]\s*```/gs;
-    const match = data.match(regex);
-
-    if (match && match[0]) {
-      let cleanedData = match[0].replace(/```json|```/g, "").trim(); // Remove code block markers
-      console.log("Raw Cleaned Data (Skill Assessment):", cleanedData); // Debug log
-
-      // Clean up the JSON string by ensuring it's in the correct format
-      cleanedData = cleanedData.replace(/\/\/.*|\/\*[\s\S]*?\*\//g, ""); // Remove comments
-      cleanedData = cleanedData.replace(/(\w+):/g, '"$1":'); // Ensure keys are quoted properly
-      cleanedData = cleanedData.replace(/,\s*}/g, "}"); // Remove trailing commas before closing braces
-      cleanedData = cleanedData.replace(/,\s*\]/g, "]"); // Remove trailing commas before closing brackets
-
-      console.log("Cleaned Data (Skill Assessment):", cleanedData); // Debug log
-
-      try {
-        const skillAssessment = JSON.parse(cleanedData); // Parse the cleaned-up data
-        return [true, skillAssessment]; // Return parsed data if successful
-      } catch (error) {
-        console.error("Error parsing skill assessment data:", error);
-        return [false, "Error parsing skill assessment data."];
-      }
-    } else {
-      return [false, "Skill assessment data not found or invalid format."];
-    }
-  } else {
-    return [false, "No skill assessment data found."];
-  }
-};
-
-const extractImportantNote = (data) => {
-  const noteRegex = new RegExp(
-    `\\*\\*Important Note:\\*\\*([\\s\\S]*?)(?=\\n\\*\\*|$)`, // Capture everything after **Important Note:** until next ** or end
-    "g"
-  );
-  const noteMatch = noteRegex.exec(data);
-
-  const importantNote = noteMatch
-    ? noteMatch[1].trim().replace(/\n+/g, " ") // Replace multiple newlines with a space
-    : "";
-
-  return importantNote;
-};
-
-const extractRoadmap = (data) => {
-  const jsObjectString = data.replace(/```json|```/g, "").trim();
-  return [true, JSON.parse(jsObjectString)];
-};
-
-const aiDashboard = tryCatch(async (req, res, next) => {
-  const { id } = req.params;
-  const student = await Student.findOne({
-    where: { accountId: id, tenantId: req.tenant.id },
-    attributes: ["id", "accountId"],
-  });
-  const [studentData, attendanceData, interestData, examScoreData, goalData] =
-    await Promise.all([
-      Account.findOne({
-        where: { id, tenantId: req.tenant.id },
-        include: {
-          model: Student,
-          as: "studentProfile",
-          attributes: {
-            exclude: [
-              "tenantId",
-              "id",
-              "deletedAt",
-              "classId",
-              "createdAt",
-              "updatedAt",
-            ],
-          },
-        },
-        attributes: ["fullName", "firstName", "lastName", "dateOfBirth"],
-      }),
-      Attendance.findAll({
-        where: { studentId: student.id, tenantId: req.tenant.id },
-        attributes: ["id", "attendanceDate", "status"],
-      }),
-      Account.findOne({
-        where: { id },
-        include: [
-          {
-            model: Interest,
-            through: { attributes: [] },
-          },
-        ],
-        attributes: ["id"],
-      }),
-      StudentExamScore.findAll({
-        where: { studentId: student.id },
-        include: [
-          {
-            model: ExamSubject,
-            as: "examSubjects",
-            include: [
-              {
-                model: Exam,
-                as: "exam",
-              },
-              {
-                model: Subject,
-              },
-            ],
-          },
-        ],
-      }),
-      Goal.findAll({
-        where: { studentId: student.id, tenantId: req.tenant.id },
-      }),
-      // MedicalRecord.findAll({
-      //   where: { studentId: id, tenantId: req.tenant.id },
-      //   attributes: {
-      //     exclude: ["createdAt", "deletedAt", "updatedAt", "tenantId"],
-      //   },
-      // }),
-      // Interest.findAll({
-      //   include: {
-      //     model: Account,
-      //     where: { id },
-      //     attributes: [],
-      //     through: { attributes: [] },
-      //   },
-      //   attributes: ["id", "name"],
-      // }),
-      // Award.findAll({
-      //   where: { studentId: id, tenantId: req.tenant.id },
-      //   attributes: {
-      //     exclude: ["createdAt", "deletedAt", "updatedAt", "tenantId"],
-      //   },
-      // }),
-    ]);
-
-  const plainStudentData = studentData
-    ? studentData.get({ plain: true })
-    : null;
-  const plainAttendanceData = attendanceData
-    ? attendanceData.map((item) => item.get({ plain: true }))
-    : null;
-  const plainExamScoreData = examScoreData
-    ? examScoreData.map((item) => item.get({ plain: true }))
-    : null;
-  const plainInterestData = interestData
-    ? interestData?.Interests.map((item) => item.get({ plain: true }))
-    : null;
-
-  const plainGoalData = goalData
-    ? goalData.map((item) => item.get({ plain: true }))
-    : null;
-
-  // const plainAwardData = awardData
-  //   ? awardData.map((item) => item.get({ plain: true }))
-  //   : null;
-
-  // console.log(plainAwardData, "interestData");
-
-  // const promptResult1 = await model.generateContent(
-  //   `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`
-  // );
-  const promptResult2 = await model.generateContent(
-    `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData, ...plainExamScoreData, ...plainGoalData })}
-  
-  **Prompt:**
-  
-  Analyze the student's profile, focusing on their academic performance, extracurricular activities, and stated interests. 
-  
-  **Task 1: Skill Assessment**
-  Assess the student's **aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity**. 
-  - If sufficient data is available, provide a **percentage-based rating** for each skill, **grounded in specific examples** from the student's profile.
-  - If no relevant data is available for a skill, assign a **value of 0%** for that skill and note that it is due to insufficient information.
-  
-  **Task 2: Career Path Recommendations**
-  Based on the skill assessment, suggest **5 potential career paths** that align with the student's strengths and interests. 
-  - If sufficient data is available, provide a **brief description** and explain how the student's skills and interests make them a good fit.
-  - If the data is insufficient to recommend career paths, indicate that career recommendations could not be generated due to lack of information.
-
-  **Output Format:**
-  
-  **Skill Assessment:**
-  [
-    { skill: "Aptitude", value: <>, fill: "var(--color-chrome)", evidence: "<>" },
-    { skill: "Logical thinking", value: <>, fill: "var(--color-safari)", evidence: "<>" },
-    // ... other skills
-  ]
-  
-  **Career Path Recommendations:**
-  [
-    { role: "No recommendations available", description: "Insufficient data to suggest potential career paths." }
-  ]
-  
-  **Note:** Ensure that all assessments and recommendations are **directly supported by evidence** from the student's profile. For missing data, explicitly provide fallback values as specified. Avoid speculative claims or assumptions beyond the provided data.`
-  );
-
-  const promptResultText2 = promptResult2.response.text();
-
-  console.log(
-    "=================================",
-    promptResultText2,
-    "==================================="
-  );
-
-  const [responded, chartData] = extractChart(promptResultText2);
-  const reason = extractReason(promptResultText2);
-  const note = extractImportantNote(promptResultText2);
-  const [careerResponded, careerData] = extractCareer(promptResultText2);
-
-  console.log(careerData[0].role);
-
-  let roadmapData = {};
-  let haveRoadmap = false;
-  if (
-    careerData[0].role &&
-    careerData[0].role !== "No recommendations available"
-  ) {
-    const promptResult3 = await model.generateContent(
-      `${JSON.stringify({ ...plainStudentData, ...plainAttendanceData, ...plainInterestData })} What is a realistic timeline to become an ${careerData[0].role}? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?
-      
-      Give me the output based on the below structure.
-      const Roadmap = {
-      "title":"<>",
-      "subtitle":"<>",
-      "timeline": "<>",
-      "key_steps": [
-          {
-              "step": "<>",
-              "icon" : "<lucid-react> (Component) Eg:- <AlertCircle className="h-4 w-4" />"
-              "skills": [<>,<>,<>],
-              "timeframe": "<>"
-          },
-          ....
-      ],
-      "potential_challenges": [
-          {
-              "challenge": "<>",
-              "strategy": "<>"
-          },
-          .....
-      ]
-      }
-      `
-    );
-    [haveRoadmap, roadmapData] = extractRoadmap(promptResult3.response.text());
-  }
-
-  let responseData = {
-    message: "Data Fetched Successfully",
-    data: [
-      // {
-      //   id: 1,
-      //   prompt:
-      //     "Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.",
-      //   result: promptResult1.response.text(),
-      // },
-      {
-        id: 2,
-        prompt: `Analyze his profile, considering his academic performance, extracurricular activities, and stated interests. Assess his aptitude, logical thinking, creativity, analytical skills, collaboration, technical skills, and curiosity. Provide a percentage-based rating for each skill. Additionally, suggest 5 potential career paths based on his strengths and interests.`,
-        result: {
-          chartData: { haveData: responded, chart: chartData },
-          careerData: { haveData: careerResponded, career: careerData },
-        },
-        response: promptResultText2,
-      },
-      {
-        id: 3,
-        prompt:
-          "What is a realistic timeline to become an AI/ML engineer? Please outline the key steps, including essential skills, certifications, and practical experience. What are the potential challenges and strategies to overcome them?",
-        result: {
-          roadmapData: { haveData: haveRoadmap, roadmap: roadmapData },
-        },
-      },
-    ],
-  };
-
-  return res.status(200).json(responseData);
-});
-
 // const ListMarks = tryCatch(async (req, res, next) => {
 //   const { id } = req.params;
 //   const student = await Student.findOne({
@@ -956,46 +1051,46 @@ const aiDashboard = tryCatch(async (req, res, next) => {
 //   });
 // });
 
-const getAttendanceCountByMonth = (data) => {
-  // Initialize attendance count for all months with 0
-  const monthOrder = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
-  const attendanceCount = monthOrder.reduce((acc, month) => {
-    acc[month] = 0; // Initialize to 0 for all months
-    return acc;
-  }, {});
+// const getAttendanceCountByMonth = (data) => {
+//   // Initialize attendance count for all months with 0
+//   const monthOrder = [
+//     "January",
+//     "February",
+//     "March",
+//     "April",
+//     "May",
+//     "June",
+//     "July",
+//     "August",
+//     "September",
+//     "October",
+//     "November",
+//     "December",
+//   ];
+//   const attendanceCount = monthOrder.reduce((acc, month) => {
+//     acc[month] = 0; // Initialize to 0 for all months
+//     return acc;
+//   }, {});
 
-  // Count attendance for present and late statuses
-  data.forEach((item) => {
-    const date = new Date(item.attendanceDate);
-    const month = date.toLocaleString("default", { month: "long" });
+//   // Count attendance for present and late statuses
+//   data.forEach((item) => {
+//     const date = new Date(item.attendanceDate);
+//     const month = date.toLocaleString("default", { month: "long" });
 
-    if (item.status === "present" || item.status === "late") {
-      // Only count present or late statuses
-      attendanceCount[month]++;
-    }
-  });
+//     if (item.status === "present" || item.status === "late") {
+//       // Only count present or late statuses
+//       attendanceCount[month]++;
+//     }
+//   });
 
-  // Convert the attendance count object to the desired array format
-  const result = monthOrder.map((month) => ({
-    month,
-    attendanceCount: attendanceCount[month],
-  }));
+//   // Convert the attendance count object to the desired array format
+//   const result = monthOrder.map((month) => ({
+//     month,
+//     attendanceCount: attendanceCount[month],
+//   }));
 
-  return result;
-};
+//   return result;
+// };
 
 // const PerformanceData = tryCatch(async (req, res, next) => {
 //   const { id } = req.params;
@@ -1141,6 +1236,9 @@ const getAttendanceCountByMonth = (data) => {
 
 module.exports = {
   StudentList,
+  aiCareer,
+  aiOverview,
+  aiAstrological,
   // StudentCreate,
   StudentView,
   StudentUpdate,
@@ -1166,8 +1264,8 @@ module.exports = {
   // aiDashboard,
   // ListMarks,
   // CreateMarks,
-  // InterestList,
+  interestList,
   // PerformanceData,
-  // GoalList,
+  GoalList,
   // VolunteerList,
 };

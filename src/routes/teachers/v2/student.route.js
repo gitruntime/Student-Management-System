@@ -3,7 +3,7 @@ const express = require("express");
  * Controls Teacher related routes
  */
 const router = express.Router();
-const { studentController } = require("../../../controllers/teachers");
+const { studentController } = require("../../../controllers/teachers/v2");
 const { authMiddleware, validate } = require("../../../middlewares");
 const {
   studentPOSTSchema,
@@ -18,22 +18,17 @@ const {
 } = require("../../../utils/validators/admin/student.validator");
 
 router.get("/", authMiddleware, studentController.StudentList);
-router.post(
-  "/",
-  authMiddleware,
-  validate(studentPOSTSchema),
-  studentController.StudentCreate
-);
 router.get("/:id", authMiddleware, studentController.StudentView);
+// !tested
 router.put(
   "/:id",
   authMiddleware,
   validate(studentPOSTSchema),
   studentController.StudentUpdate
 );
-router.delete("/:id", authMiddleware, studentController.StudentDelete);
+// router.delete("/:id", authMiddleware, studentController.StudentDelete);
 
-router.get("/:id/interests", authMiddleware, studentController.InterestList);
+router.get("/:id/interests", authMiddleware, studentController.interestList);
 router.get(
   "/:id/attendances",
   authMiddleware,
@@ -45,35 +40,42 @@ router.post(
   validate(AdminValidator.AttendancesSchema),
   studentController.attendanceCreate
 );
-router.put(
-  "/:studentId/attendances/:id",
-  authMiddleware,
-  validate(AdminValidator.AttendancesSchema),
-  studentController.attendanceUpdate
-);
-router.delete(
-  "/:studentId/attendances/:id",
-  authMiddleware,
-  studentController.attendanceDelete
-);
+// router.put(
+//   "/:studentId/attendances/:id",
+//   authMiddleware,
+//   validate(AdminValidator.AttendancesSchema),
+//   studentController.attendanceUpdate
+// );
+// router.delete(
+//   "/:studentId/attendances/:id",
+//   authMiddleware,
+//   studentController.attendanceDelete
+// );
 
-router.get("/:id/ai", authMiddleware, studentController.aiDashboard);
+// router.get("/:id/ai", authMiddleware, studentController.aiDashboard);
 
-router.get("/:id/addresses", authMiddleware, studentController.addressList);
-router.get("/:id/marks", authMiddleware, studentController.ListMarks);
-router.post(
-  "/:id/marks",
-  authMiddleware,
-  validate(CreateMarksSchema),
-  studentController.CreateMarks
-);
-router.get(
-  "/:id/performances",
-  authMiddleware,
-  studentController.PerformanceData
-);
+// router.get("/:id/addresses", authMiddleware, studentController.addressList);
+// router.get("/:id/marks", authMiddleware, studentController.ListMarks);
+// router.post(
+//   "/:id/marks",
+//   authMiddleware,
+//   validate(CreateMarksSchema),
+//   studentController.CreateMarks
+// );
+// router.get(
+//   "/:id/performances",
+//   authMiddleware,
+//   studentController.PerformanceData
+// );
 router.get("/:id/goals", authMiddleware, studentController.GoalList);
-router.get("/:id/volunteers", authMiddleware, studentController.VolunteerList);
+router.get("/:id/ai/career", authMiddleware, studentController.aiCareer);
+router.get("/:id/ai/overview", authMiddleware, studentController.aiOverview);
+router.get(
+  "/:id/ai/astrological",
+  authMiddleware,
+  studentController.aiAstrological
+);
+// router.get("/:id/volunteers", authMiddleware, studentController.VolunteerList);
 // router.put("/:id", authMiddleware, isAdmin, studentController.studentUpdate);
 // router.delete("/:id", authMiddleware, isAdmin, studentController.studentDelete);
 

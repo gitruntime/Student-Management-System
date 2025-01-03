@@ -14,7 +14,11 @@ const {
   Class,
 } = require("../../../models");
 const { calculateTotalPages } = require("../../../utils/handlers");
-const { Op, ValidationError: SeqValidationError } = require("sequelize");
+const {
+  Op,
+  ValidationError: SeqValidationError,
+  Sequelize,
+} = require("sequelize");
 const { Goal, Volunteer } = require("../../../models/students/academic.model");
 const { db: sequelize } = require("../../../configs/db.config");
 const { ai } = require("../../../configs/ai.config");
@@ -188,13 +192,15 @@ const studentUpdate = tryCatch(async (req, res, next) => {
       },
     ],
   });
-  console.log(data);
 
   if (!data) return res.status(404).json({ message: "Student not found" });
-  const { classId, ...rest } = req.validatedData;
+  const { classId, profilePicture, bio, bloodGroup, sex, ...rest } =
+    req.validatedData;
+
   data.updateFormData(rest);
   await data.save();
   data.studentProfile.updateFormData({ bloodGroup, bio, profilePicture });
+  await data.studentProfile.save();
   return res
     .status(200)
     .json({ message: "Student data updated successfully", data });
@@ -239,24 +245,86 @@ const studentDelete = tryCatch(async (req, res, next) => {
 
 // TODO :- Need to work
 const attendanceGraph = tryCatch(async (req, res, next) => {
-  // graphType = ['line-chart','line-chart-multiple]
-  // rangeMode = ['week','range']
-  // if rangeMode is range
-  const { graphType, rangeMode } = req.query;
+  const { id } = req.params;
+  const student = await Student.findOne({
+    where: { accountId: id, tenantId: req.tenant.id },
+    attributes: ["id", "accountId"],
+  });
+  if (!student)
+    return res.status(404).json({ message: "Requested student not found.!" });
 
-  const attendanceCount = getMonthName().reduce((acc, month) => {
-    acc[month] = 0; // Initialize to 0 for all months
+  const months = [
+    { month: "Jan", present: 0, late: 0, leave: 0, total: 0 },
+    { month: "Feb", present: 0, late: 0, leave: 0, total: 0 },
+    { month: "Mar", present: 0, late: 0, leave: 0, total: 0 },
+    { month: "Apr", present: 0, late: 0, leave: 0, total: 0 },
+    { month: "May", present: 0, late: 0, leave: 0, total: 0 },
+    { month: "Jun", present: 0, late: 0, leave: 0, total: 0 },
+  ];
+
+  const attendanceData = await Attendance.findAll({
+    attributes: [
+      [
+        Sequelize.fn("TO_CHAR", Sequelize.col("attendance_date"), "Mon"),
+        "month",
+      ],
+      [
+        Sequelize.fn(
+          "COUNT",
+          Sequelize.literal("CASE WHEN status = 'present' THEN 1 END")
+        ),
+        "present",
+      ],
+      [
+        Sequelize.fn(
+          "COUNT",
+          Sequelize.literal("CASE WHEN status = 'late' THEN 1 END")
+        ),
+        "late",
+      ],
+      [
+        Sequelize.fn(
+          "COUNT",
+          Sequelize.literal("CASE WHEN status = 'absent' THEN 1 END")
+        ),
+        "leave",
+      ],
+      [Sequelize.fn("COUNT", Sequelize.col("id")), "total"],
+    ],
+    group: [
+      Sequelize.fn("TO_CHAR", Sequelize.col("attendance_date"), "Mon"),
+      Sequelize.col("attendance_date"), // Include raw attendance_date in GROUP BY
+    ],
+    order: [
+      [
+        Sequelize.fn("DATE_PART", "month", Sequelize.col("attendance_date")),
+        "ASC",
+      ],
+    ],
+  });
+
+  const dbData = attendanceData.reduce((acc, row) => {
+    acc[row.get("month")] = {
+      month: row.get("month"),
+      present: parseInt(row.get("present"), 10) || 0,
+      late: parseInt(row.get("late"), 10) || 0,
+      leave: parseInt(row.get("leave"), 10) || 0,
+      total: parseInt(row.get("total"), 10) || 0,
+    };
     return acc;
   }, {});
-  data.forEach((item) => {
-    const date = new Date(item.attendanceDate);
-    const month = date.toLocaleString("default", { month: "long" });
 
-    if (item.status === "present" || item.status === "late") {
-      // Only count present or late statuses
-      attendanceCount[month]++;
-    }
+  const attendanceDatas = months.map((month) => {
+    return dbData[month.month] || month;
   });
+
+  const responseData = {
+    message: "Attendance graph fetched successfully",
+    data: attendanceDatas,
+    version: "v2",
+  };
+
+  return res.status(200).json(responseData);
 });
 
 // Developed
@@ -740,7 +808,6 @@ const getCompleteStudentData = async (id, student, tenantId) => {
     ? goalData.map((item) => item.get({ plain: true }))
     : null;
 
-  console.log(plainGoalData, "=======================================>");
 
   // const plainAwardData = awardData
   //   ? awardData.map((item) => item.get({ plain: true }))
@@ -866,7 +933,7 @@ const aiAstrological = tryCatch(async (req, res, next) => {
     return res.status(404).json({ message: "Astrological data not found" });
   return res.status(200).json({
     message: "Data fetched succcesssfully.! ",
-    data: result.response.text(),
+    data: JSON.parse(result.response.text()),
   });
 });
 
@@ -1519,12 +1586,14 @@ module.exports = {
   studentDelete,
   interestList,
   attendanceList,
+  attendanceGraph,
   attendanceCreate,
   attendanceUpdate,
   attendanceDelete,
   aiOverview,
   aiAstrological,
   aiCareer,
+  getCompleteStudentData,
   StudentView,
   // addressList,
   ListMarks,

@@ -13,6 +13,7 @@ const v2teacherRouter = require("./src/routes/teachers/v2/index");
 const StudentRouter = require("./src/routes/students/index");
 const v2StudentRouter = require("./src/routes/students/v2/index");
 const nodeAdmin = require("./src/routes/superadmin/index");
+const v2nodeAdmin = require("./src/routes/superadmin/v2/index");
 
 const port = process.env.PORT || 3000;
 const { dbConnect } = require("./src/configs/db.config");
@@ -55,7 +56,7 @@ app.use("/api/teacher", teacherRouter);
 app.use("/api/student", StudentRouter);
 
 app.use("/api/v2/admin", v2adminRouter);
-// app.use("/api/v2/superadmin", nodeAdmin);
+app.use("/api/v2/superadmin", v2nodeAdmin);
 app.use("/api/v2/teacher", v2teacherRouter);
 app.use("/api/v2/student", v2StudentRouter);
 

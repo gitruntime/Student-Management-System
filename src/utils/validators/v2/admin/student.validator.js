@@ -12,7 +12,7 @@ const studentPOSTSchema = Joi.object({
   bloodGroup: Joi.string().optional().allow(""),
   sex: Joi.string().optional().allow(""),
   password: Joi.string()
-    .required()
+    .optional()
     .min(8)
     .max(12)
     .custom((value, helpers) => {

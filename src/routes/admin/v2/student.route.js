@@ -38,6 +38,12 @@ router.get(
   studentController.interestList
 );
 router.get(
+  "/:id/attendances/graph",
+  authMiddleware,
+  isAdmin,
+  studentController.attendanceGraph
+);
+router.get(
   "/:id/attendances",
   authMiddleware,
   isAdmin,

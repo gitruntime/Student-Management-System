@@ -87,4 +87,12 @@ router.delete(
   AccountController.VolunteerDelete
 );
 
+router.get(
+  "/ai/astrological",
+  authMiddleware,
+  AccountController.aiAstrological
+);
+router.get("/ai/career", authMiddleware, AccountController.aiCareer);
+router.get("/ai/overview", authMiddleware, AccountController.aiOverview);
+
 module.exports = router;

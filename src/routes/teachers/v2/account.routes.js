@@ -22,9 +22,9 @@ const router = express.Router();
 //   experienceSchema,
 // } = require("../../utils/validators/teacher/account.validator");
 
-router.get("/", authMiddleware, accountController.TeacherView);
+router.get("/profile", authMiddleware, accountController.TeacherView);
 router.put(
-  "/",
+  "/profile",
   authMiddleware,
   validate(teacherProfileSchema),
   accountController.TeacherUpdate

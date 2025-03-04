@@ -1,8 +1,13 @@
 // CORS configuration
-const allowedOrigins = ["http://localhost:5173","https://nuzion-v2.vercel.app"];
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://nuzion-v2.vercel.app",
+  "/.vercel.app$/",
+];
 const checkOrigin = (origin) => {
-  const regex = /^http:\/\/([a-zA-Z0-9-]+\.)?localhost:5173$/;
-  return regex.test(origin);
+  const regex1 = /^http:\/\/([a-zA-Z0-9-]+\.)?localhost:5173$/;
+  const regex2 = /^https:\/\/([a-zA-Z0-9-]+\.)?vercel.app$/;
+  return regex1.test(origin) || regex2.test(origin);
 };
 
 const corsOptions = {

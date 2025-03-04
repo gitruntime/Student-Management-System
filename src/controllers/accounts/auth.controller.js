@@ -9,7 +9,7 @@ const { Account, Tenant } = require("../../models");
 const login = tryCatch(async (req, res) => {
   const { email, password } = req.validatedData;
   const user = await Account.findOne({
-    where: { email },
+    where: { email, tenantId: req.tenant.id },
     attributes: [
       "id",
       "firstName",
